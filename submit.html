@@ -121,33 +121,6 @@ textarea {
   line-height: 1.7;
 }
 
-.captcha-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.captcha-box {
-  display: inline-block;
-  background: var(--midred);
-  color: var(--darkred);
-  font-weight: 700;
-  font-size: 1.4rem;
-  font-family: "Noto Serif SC", serif;
-  letter-spacing: 0.25em;
-  padding: 8px 20px;
-  border-radius: var(--radius);
-  border: 2px dashed var(--border);
-  min-width: 110px;
-  text-align: center;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.captcha-input {
-  flex: 1;
-}
-
 .submit-btn {
   display: inline-flex;
   align-items: center;
@@ -213,6 +186,11 @@ textarea {
   text-align: center;
   line-height: 1.8;
 }
+
+/* Turnstile wrapper — left-aligned to match form style */
+.turnstile-wrap {
+  margin-top: 4px;
+}
 </style>
 </head>
 <body>
@@ -250,10 +228,13 @@ textarea {
   <hr class="divider">
 
   <div class="form-group">
-    <label>验证码 <span class="hint">请在右侧输入框填写左边显示的数字</span></label>
-    <div class="captcha-row">
-      <div class="captcha-box" id="captchaDisplay" aria-label="验证码"></div>
-      <input type="text" class="captcha-input" id="captcha" placeholder="输入验证码" maxlength="6" autocomplete="off" inputmode="numeric">
+    <label>人机验证 <span class="hint">请完成下方验证后再提交</span></label>
+    <div class="turnstile-wrap">
+      <div class="cf-turnstile"
+           data-sitekey="0x4AAAAAACq6pvVpG5_kAbifRVm6OiPJQOc"
+           data-theme="light"
+           data-language="zh-cn">
+      </div>
     </div>
   </div>
 
@@ -274,10 +255,6 @@ textarea {
 /* ========== 配置区 ========== */
 const REPO = "hepsa2/redstar"; // ← 修改为你的 owner/repo
 
-/* ========== 验证码 ========== */
-let captchaNum = Math.floor(Math.random() * 9000) + 1000;
-document.getElementById("captchaDisplay").innerText = captchaNum;
-
 /* ========== 字数统计 ========== */
 const contentEl   = document.getElementById("content");
 const charCountEl = document.getElementById("charCount");
@@ -297,7 +274,9 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   const title    = document.getElementById("title").value.trim();
   const category = document.getElementById("category").value;
   const content  = document.getElementById("content").value.trim();
-  const captcha  = document.getElementById("captcha").value.trim();
+
+  /* 获取 Turnstile 验证结果 token */
+  const turnstileToken = turnstile.getResponse();
 
   /* 校验 */
   if (!title) {
@@ -310,13 +289,9 @@ document.getElementById("submitBtn").addEventListener("click", () => {
     errorMsg.innerText = "❌ 正文不能为空。";
     return;
   }
-  if (captcha !== String(captchaNum)) {
+  if (!turnstileToken) {
     errorMsg.className = "msg error";
-    errorMsg.innerText = "❌ 验证码错误，请重新输入。";
-    /* 刷新验证码 */
-    captchaNum = Math.floor(Math.random() * 9000) + 1000;
-    document.getElementById("captchaDisplay").innerText = captchaNum;
-    document.getElementById("captcha").value = "";
+    errorMsg.innerText = "❌ 请先完成人机验证。";
     return;
   }
 
