@@ -283,6 +283,9 @@
       }
       window.addEventListener("scroll", checkScroll);
       checkScroll(); // 页面加载时也检查一次
+if (navigator.language.startsWith("en")) {
+    window.location.href = "/en/";
+}
 
       /* ===== 倒计时 ===== */
       function pad(n) { return String(n).padStart(2, "0"); }
