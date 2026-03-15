@@ -16,6 +16,31 @@
     <meta name="twitter:image" content="https://raw.githubusercontent.com/hepsa2/redstar/main/00.png">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
+  /* 浮动AI按钮样式 */
+  #aiBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: #ff0000; /* 红色背景 */
+    color: #ffffff;       /* 白色文字/图标 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+  }
+
+  /* 悬停动画效果 */
+  #aiBtn:hover {
+    transform: scale(1.1);
+  }
+    </style>
+    <style>
       :root { --red: #b30000; --lightred: #ffd6d6; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background: var(--lightred); font-family: 'Noto Sans SC', sans-serif; overflow-x: hidden; }
@@ -311,6 +336,13 @@ if (navigator.language.startsWith("en")) {
       tick();
       setInterval(tick, 1000);
     </script>
+<div id="aiBtn" title="打开 AI 对话">💬</div>
 
+<script>
+  // 点击按钮打开 Hugging Face Space
+  document.getElementById("aiBtn").addEventListener("click", () => {
+    window.open("https://huggingface.co/spaces/rofg2/rotai", "_blank");
+  });
+</script>
   </body>
 </html>
