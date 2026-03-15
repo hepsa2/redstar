@@ -16,34 +16,24 @@
     <meta name="twitter:image" content="https://raw.githubusercontent.com/hepsa2/redstar/main/00.png">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-  /* 浮动AI按钮样式 */
-  #aiBtn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background: #ff0000; /* 红色背景 */
-    color: #ffffff;       /* 白色文字/图标 */
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: transform 0.2s;
-  }
+      :root {
+        --red: #b30000;
+        --darkred: #7a0000;
+        --lightred: #ffd6d6;
+        --gold: #ffd700;
+      }
 
-  /* 悬停动画效果 */
-  #aiBtn:hover {
-    transform: scale(1.1);
-  }
-    </style>
-    <style>
-      :root { --red: #b30000; --lightred: #ffd6d6; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background: var(--lightred); font-family: 'Noto Sans SC', sans-serif; overflow-x: hidden; }
+
+      /* ===== 流星画布（固定全屏，不遮交互） ===== */
+      #meteorCanvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 9998;
+      }
 
       /* ===== 淡色红星背景 ===== */
       .flag-bg {
@@ -100,8 +90,57 @@
       }
       .image-box img { width: 100%; display: block; }
 
-      /* ===== 正文 ===== */
-      .story { max-width: 750px; margin: auto; font-size: 18px; line-height: 1.9; margin-top: 40px; }
+      /* ===== 先驱者标题 ===== */
+      .pioneer-heading {
+        max-width: 750px;
+        margin: 0 auto 28px auto;
+        font-size: clamp(26px, 5vw, 44px);
+        font-weight: 700;
+        color: #6b0000;
+        letter-spacing: 0.12em;
+        font-family: 'Noto Sans SC', sans-serif;
+        /* 入场动画：从下方浮入 */
+        opacity: 0;
+        transform: translateY(48px);
+        transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+        position: relative;
+      }
+      .pioneer-heading.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /* 装饰线 */
+      .pioneer-heading::before,
+      .pioneer-heading::after {
+        content: '';
+        display: inline-block;
+        width: 32px; height: 2px;
+        background: #8b0000;
+        vertical-align: middle;
+        margin: 0 14px;
+        opacity: 0.6;
+      }
+
+      /* ===== 正文（逐行淡入） ===== */
+      .story {
+        max-width: 750px;
+        margin: auto;
+        font-size: 18px;
+        line-height: 1.9;
+        margin-top: 0;
+        text-align: center;
+      }
+      .story p {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+        /* 延迟由 JS 注入 */
+      }
+      .story p.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
 
       /* ===== 滚动口号 ===== */
       .slogan {
@@ -120,7 +159,6 @@
       }
       .countdown-wrap.show { opacity: 1; transform: translateY(0); }
 
-      /* 标题行 */
       .countdown-heading {
         font-family: 'Noto Sans SC', sans-serif;
         font-size: 0.82rem;
@@ -132,7 +170,6 @@
       .countdown-heading::before,
       .countdown-heading::after { content: " ★ "; color: #b30000; }
 
-      /* 数字格子区 */
       .countdown-grid {
         display: inline-flex;
         align-items: flex-start;
@@ -141,12 +178,7 @@
         flex-wrap: wrap;
       }
 
-      .countdown-unit {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-      }
+      .countdown-unit { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 
       .countdown-box {
         background: #8b0000;
@@ -168,7 +200,6 @@
         position: relative;
         overflow: hidden;
       }
-      /* 翻牌分割线 */
       .countdown-box::after {
         content: '';
         position: absolute;
@@ -186,7 +217,6 @@
         opacity: 0.6;
       }
 
-      /* 分隔冒号 */
       .countdown-sep {
         font-family: 'Orbitron', monospace;
         font-size: clamp(26px, 4.5vw, 50px);
@@ -199,7 +229,6 @@
         flex-shrink: 0;
       }
 
-      /* 倒计时结束 */
       .countdown-finished {
         font-family: 'Orbitron', monospace;
         font-size: 1.5rem;
@@ -207,15 +236,99 @@
         letter-spacing: 0.18em;
       }
 
+      /* ===== AI 悬浮按钮（现代风，匹配赤星主题） ===== */
+      #aiBtn {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        width: 62px;
+        height: 62px;
+        background: linear-gradient(135deg, #c0000a 0%, #7a0000 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow:
+          0 4px 20px rgba(140, 0, 0, 0.45),
+          0 1px 4px rgba(0,0,0,0.18);
+        transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.22s ease;
+        z-index: 9999;
+        /* 脉冲光晕 */
+        animation: aiBtnPulse 3s ease-in-out infinite;
+      }
+      #aiBtn:hover {
+        transform: scale(1.1);
+        box-shadow:
+          0 8px 32px rgba(180, 0, 0, 0.55),
+          0 2px 8px rgba(0,0,0,0.22);
+        animation: none;
+      }
+      #aiBtn:active {
+        transform: scale(0.96);
+      }
+      /* 脉冲光圈 */
+      #aiBtn::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid rgba(200, 0, 0, 0.4);
+        animation: aiRingPulse 3s ease-in-out infinite;
+      }
+      /* 按钮内 SVG 图标 */
+      #aiBtn svg {
+        width: 28px; height: 28px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        position: relative;
+        z-index: 1;
+      }
+      /* 金色小星星角标 */
+      #aiBtn::after {
+        content: '★';
+        position: absolute;
+        top: -5px; right: -3px;
+        font-size: 13px;
+        color: #ffd700;
+        line-height: 1;
+        filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+        animation: starSpin 6s linear infinite;
+      }
+
+      @keyframes aiBtnPulse {
+        0%, 100% { box-shadow: 0 4px 20px rgba(140,0,0,0.45), 0 1px 4px rgba(0,0,0,0.18); }
+        50%       { box-shadow: 0 4px 30px rgba(190,0,0,0.65), 0 1px 4px rgba(0,0,0,0.18); }
+      }
+      @keyframes aiRingPulse {
+        0%   { transform: scale(1);   opacity: 0.7; }
+        60%  { transform: scale(1.18); opacity: 0; }
+        100% { transform: scale(1);   opacity: 0; }
+      }
+      @keyframes starSpin {
+        0%   { transform: rotate(0deg) scale(1); }
+        50%  { transform: rotate(180deg) scale(1.2); }
+        100% { transform: rotate(360deg) scale(1); }
+      }
+
       /* ===== 响应式 ===== */
       @media (max-width: 768px) {
         .sidebar { width: 100%; }
         .flag-bg { font-size: 150vw; }
         .countdown-grid { gap: 6px; }
+        #aiBtn { width: 54px; height: 54px; bottom: 20px; right: 20px; }
+        #aiBtn svg { width: 24px; height: 24px; }
       }
     </style>
   </head>
   <body>
+
+    <!-- 流星画布 -->
+    <canvas id="meteorCanvas"></canvas>
 
     <div class="flag-bg">★</div>
 
@@ -237,7 +350,11 @@
         <img src="aa.png">
       </div>
 
-      <div class="story">
+      <!-- 先驱者标题 -->
+      <div class="pioneer-heading" id="pioneerHeading">做一位先驱者</div>
+
+      <!-- 正文（逐行） -->
+      <div class="story" id="storyBlock">
         <p>在联合左派中间居统治地位的悲观主义</p>
         <p>将不会在群众中间有什么市场</p>
         <p>因为群众根本就不是悲观主义者</p>
@@ -285,8 +402,23 @@
 
     </div><!-- /container -->
 
+    <!-- AI 悬浮按钮 -->
+    <div id="aiBtn" title="打开 AI 对话">
+      <!-- 自定义 SVG：对话气泡 + 星形点缀 -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <!-- 对话气泡主体 -->
+        <path d="M12 3C7.03 3 3 6.69 3 11.2c0 2.4 1.1 4.57 2.88 6.1L5 21l3.9-1.72A10.1 10.1 0 0012 19.4c4.97 0 9-3.69 9-8.2S16.97 3 12 3z"/>
+        <!-- 内部三个点：表示AI思考 -->
+        <circle cx="8.5"  cy="11.2" r="1" fill="white" stroke="none"/>
+        <circle cx="12"   cy="11.2" r="1" fill="white" stroke="none"/>
+        <circle cx="15.5" cy="11.2" r="1" fill="white" stroke="none"/>
+      </svg>
+    </div>
+
     <script>
-      /* ===== 菜单 ===== */
+      /* =========================================================
+         1. 菜单
+      ========================================================= */
       const menuBtn = document.getElementById("menuBtn");
       const sidebar = document.getElementById("sidebar");
       menuBtn.onclick = () => {
@@ -294,55 +426,217 @@
         sidebar.classList.toggle("active");
       };
 
-      /* ===== 滚动淡入（口号 + 倒计时） ===== */
+      /* =========================================================
+         2. 英文重定向
+      ========================================================= */
+      if (navigator.language.startsWith("en")) {
+        window.location.href = "/en/";
+      }
+
+      /* =========================================================
+         3. 先驱者标题：页面载入后立即浮入
+      ========================================================= */
+      const pioneerHeading = document.getElementById("pioneerHeading");
+      // 短暂延迟后展示，给页面渲染留出时间
+      setTimeout(() => {
+        pioneerHeading.classList.add("show");
+      }, 400);
+
+      /* =========================================================
+         4. 正文逐行滚动淡入
+         先驱者标题浮入后，向下滚动时正文逐行出现
+      ========================================================= */
+      const storyLines = document.querySelectorAll(".story p");
+      // 为每行注入递增延迟
+      storyLines.forEach((p, i) => {
+        p.style.transitionDelay = `${i * 0.08}s`;
+      });
+
+      function revealStory() {
+        const triggerY = window.innerHeight - 80;
+        storyLines.forEach(p => {
+          if (p.getBoundingClientRect().top < triggerY) {
+            p.classList.add("show");
+          }
+        });
+      }
+
+      /* =========================================================
+         5. 其它滚动淡入（口号 + 倒计时）
+      ========================================================= */
       const slogan        = document.getElementById("slogan");
       const countdownWrap = document.getElementById("countdownWrap");
 
       function checkScroll() {
-        if (slogan.getBoundingClientRect().top < window.innerHeight - 100) {
-          slogan.classList.add("show");
-        }
-        if (countdownWrap.getBoundingClientRect().top < window.innerHeight - 60) {
-          countdownWrap.classList.add("show");
-        }
+        const vy = window.innerHeight - 100;
+        if (slogan.getBoundingClientRect().top < vy)        slogan.classList.add("show");
+        if (countdownWrap.getBoundingClientRect().top < vy + 40) countdownWrap.classList.add("show");
+        revealStory();
       }
+
       window.addEventListener("scroll", checkScroll);
-      checkScroll(); // 页面加载时也检查一次
-if (navigator.language.startsWith("en")) {
-    window.location.href = "/en/";
-}
+      checkScroll();
 
-      /* ===== 倒计时 ===== */
+      /* =========================================================
+         6. 倒计时
+      ========================================================= */
       function pad(n) { return String(n).padStart(2, "0"); }
-
       function tick() {
         const now    = new Date();
         const target = new Date(now.getFullYear() + 1, 0, 1, 0, 0, 0, 0);
         const diff   = target - now;
-
         if (diff <= 0) {
           document.getElementById("countdownGrid").innerHTML =
             '<div class="countdown-finished">★ 新年快乐 ★</div>';
           return;
         }
-
         const s = Math.floor(diff / 1000);
         document.getElementById("cd-days").textContent    = pad(Math.floor(s / 86400));
         document.getElementById("cd-hours").textContent   = pad(Math.floor((s % 86400) / 3600));
         document.getElementById("cd-minutes").textContent = pad(Math.floor((s % 3600) / 60));
         document.getElementById("cd-seconds").textContent = pad(s % 60);
       }
-
       tick();
       setInterval(tick, 1000);
-    </script>
-<div id="aiBtn" title="打开 AI 对话">💬</div>
 
-<script>
-  // 点击按钮打开 Hugging Face Space
-  document.getElementById("aiBtn").addEventListener("click", () => {
-    window.open("https://huggingface.co/spaces/rofg2/rotai", "_blank");
-  });
-</script>
+      /* =========================================================
+         7. AI 按钮
+      ========================================================= */
+      document.getElementById("aiBtn").addEventListener("click", () => {
+        window.open("https://huggingface.co/spaces/rofg2/rotai", "_blank");
+      });
+
+      /* =========================================================
+         8. 火流星特效（持续 15 秒，canvas 覆盖全屏）
+      ========================================================= */
+      (function () {
+        const canvas = document.getElementById("meteorCanvas");
+        const ctx    = canvas.getContext("2d");
+
+        // 画布自适应窗口
+        function resize() {
+          canvas.width  = window.innerWidth;
+          canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener("resize", resize);
+
+        const DURATION     = 15000;   // 总持续毫秒
+        const SPAWN_RATE   = 220;     // 每隔多少 ms 生成一颗流星（ms）
+        const startTime    = performance.now();
+        let   lastSpawn    = 0;
+        const meteors      = [];
+
+        /* 流星颜色系：以金色 / 火红为主，偶尔纯白 */
+        const COLORS = [
+          [255, 200,  40],  // 金黄
+          [255, 140,  20],  // 火橙
+          [255,  60,  20],  // 赤红
+          [255, 240, 180],  // 暖白
+        ];
+
+        function spawnMeteor() {
+          // 随机从顶部或右侧射入，角度偏向左下
+          const fromRight = Math.random() > 0.3;
+          const x = fromRight
+            ? canvas.width * (0.5 + Math.random() * 0.7)
+            : canvas.width * (Math.random() * 0.5);
+          const y = Math.random() * canvas.height * 0.55;
+
+          const angle  = (Math.PI / 4) + (Math.random() - 0.5) * 0.5; // ~45° ± offset
+          const speed  = 12 + Math.random() * 18;
+          const length = 100 + Math.random() * 200;
+          const life   = 0;
+          const maxLife = 0.6 + Math.random() * 0.4; // 0.6 ~ 1.0 s
+          const col    = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+          meteors.push({ x, y, angle, speed, length, life, maxLife, col });
+        }
+
+        function drawMeteor(m, alpha) {
+          const tailX = m.x - Math.cos(m.angle) * m.length;
+          const tailY = m.y - Math.sin(m.angle) * m.length;
+
+          const grad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+          const [r, g, b] = m.col;
+
+          // 头部：明亮核心
+          grad.addColorStop(0,   `rgba(${r},${g},${b},0)`);
+          grad.addColorStop(0.6, `rgba(${r},${g},${b},${alpha * 0.4})`);
+          grad.addColorStop(1,   `rgba(255,255,255,${alpha})`);
+
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
+          ctx.strokeStyle = grad;
+          ctx.lineWidth   = 2.5;
+          ctx.shadowColor = `rgba(${r},${g},${b},${alpha})`;
+          ctx.shadowBlur  = 14;
+          ctx.beginPath();
+          ctx.moveTo(tailX, tailY);
+          ctx.lineTo(m.x,  m.y);
+          ctx.stroke();
+
+          // 亮核点
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.shadowBlur = 20;
+          ctx.fill();
+          ctx.restore();
+        }
+
+        let rafId;
+        let prevTime = performance.now();
+
+        function animate(now) {
+          const elapsed = now - startTime;
+
+          // 超过15秒就停止生成，等已有流星消失后清除画布
+          if (elapsed > DURATION && meteors.length === 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.style.display = "none";
+            return;
+          }
+
+          const dt = (now - prevTime) / 1000;  // 秒
+          prevTime = now;
+
+          // 生成新流星
+          if (elapsed < DURATION && now - lastSpawn > SPAWN_RATE) {
+            spawnMeteor();
+            // 偶尔连发两颗，增加密度感
+            if (Math.random() > 0.65) spawnMeteor();
+            lastSpawn = now;
+          }
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          for (let i = meteors.length - 1; i >= 0; i--) {
+            const m = meteors[i];
+            m.life += dt;
+            m.x    += Math.cos(m.angle) * m.speed;
+            m.y    += Math.sin(m.angle) * m.speed;
+
+            // 淡入淡出透明度
+            const progress = m.life / m.maxLife;
+            let alpha;
+            if (progress < 0.15)      alpha = progress / 0.15;
+            else if (progress < 0.7)  alpha = 1;
+            else                      alpha = 1 - (progress - 0.7) / 0.3;
+
+            if (m.life >= m.maxLife || m.x > canvas.width + 200 || m.y > canvas.height + 200) {
+              meteors.splice(i, 1);
+              continue;
+            }
+
+            drawMeteor(m, Math.max(0, alpha));
+          }
+
+          rafId = requestAnimationFrame(animate);
+        }
+
+        rafId = requestAnimationFrame(animate);
+      })();
+    </script>
   </body>
 </html>
