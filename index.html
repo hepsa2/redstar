@@ -376,6 +376,89 @@
       #aiBtn { width: 54px; height: 54px; bottom: 20px; right: 20px; }
       #aiBtn svg { width: 24px; height: 24px; }
     }
+    /* ===== 警告弹窗 ===== */
+#warnOverlay {
+  position: fixed; inset: 0;
+  background: rgba(80, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+#warnOverlay.show { opacity: 1; pointer-events: all; }
+
+#warnBox {
+  background: #fff5f5;
+  border: 2px solid #8b0000;
+  border-radius: 14px;
+  padding: 40px 36px 32px;
+  max-width: 480px; width: 90%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(100,0,0,0.35), 0 0 0 6px rgba(139,0,0,0.08);
+  text-align: center;
+  animation: warnPop 0.45s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes warnPop {
+  from { transform: scale(0.82) translateY(24px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+#warnBox .warn-star {
+  font-size: 36px; color: #b30000; display: block; margin-bottom: 14px;
+  animation: starSpin 6s linear infinite;
+}
+
+#warnBox h2 {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 1.15rem; font-weight: 700;
+  color: #7a0000; letter-spacing: 0.08em; margin-bottom: 18px;
+}
+#warnBox h2::before, #warnBox h2::after {
+  content: " ★ "; color: #b30000; font-size: 0.75em;
+}
+
+#warnBox p {
+  font-size: 15px; line-height: 1.85; color: #3a0000;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+#warnBox p strong {
+  color: #b30000; font-weight: 700;
+  background: #ffe0e0; padding: 1px 5px; border-radius: 4px;
+}
+#warnBox p a {
+  color: #8b0000; text-decoration: underline;
+  text-underline-offset: 3px; font-weight: 700;
+}
+#warnBox p a:hover { color: #c0000a; }
+
+/* 倒计时进度条 */
+#warnProgress {
+  margin-top: 24px;
+  height: 4px; border-radius: 2px;
+  background: #ffd6d6; overflow: hidden;
+}
+#warnProgressBar {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #b30000, #ff4040);
+  border-radius: 2px;
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+
+#warnTimer {
+  margin-top: 8px;
+  font-size: 12px; color: #a05050; letter-spacing: 0.1em;
+  font-family: 'Orbitron', monospace;
+}
+
+#warnClose {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; cursor: pointer;
+  font-size: 22px; color: #8b0000; line-height: 1;
+  transition: transform 0.2s, color 0.2s;
+}
+#warnClose:hover { transform: scale(1.2) rotate(90deg); color: #c0000a; }
   </style>
 </head>
 <body>
@@ -698,5 +781,63 @@
       requestAnimationFrame(animate);
     })();
   </script>
+  <!-- 警告弹窗 -->
+<div id="warnOverlay">
+  <div id="warnBox">
+    <button id="warnClose" title="关闭">✕</button>
+    <span class="warn-star">★</span>
+    <h2>访问提示</h2>
+    <p>
+      请开启 VPN 或代理访问本站。<br>
+      如果不知道什么是 VPN / 代理，<strong>切忌</strong>点击右下角 AI 交流按钮，<br>
+      并先访问<a href="network.html">此页面</a>。
+    </p>
+    <div id="warnProgress"><div id="warnProgressBar"></div></div>
+    <div id="warnTimer">17 秒后自动关闭</div>
+  </div>
+</div>
+
+<script>
+  /* ===== 警告弹窗逻辑 ===== */
+  (function () {
+    const overlay     = document.getElementById("warnOverlay");
+    const closeBtn    = document.getElementById("warnClose");
+    const bar         = document.getElementById("warnProgressBar");
+    const timerLabel  = document.getElementById("warnTimer");
+    const TOTAL       = 17;
+    let   remaining   = TOTAL;
+    let   ticker;
+
+    function closeWarn() {
+      overlay.classList.remove("show");
+      clearInterval(ticker);
+    }
+
+    function startCountdown() {
+      /* 进度条初始满格，逐步缩短 */
+      bar.style.transform = "scaleX(1)";
+
+      ticker = setInterval(() => {
+        remaining--;
+        const ratio = remaining / TOTAL;
+        bar.style.transform = `scaleX(${ratio})`;
+        timerLabel.textContent = `${remaining} 秒后自动关闭`;
+        if (remaining <= 0) closeWarn();
+      }, 1000);
+    }
+
+    /* 3 秒后显示 */
+    setTimeout(() => {
+      overlay.classList.add("show");
+      startCountdown();
+    }, 3000);
+
+    closeBtn.addEventListener("click", closeWarn);
+    /* 点击蒙版外区域也可关闭 */
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) closeWarn();
+    });
+  })();
+</script>
 </body>
 </html>
