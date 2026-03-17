@@ -2,79 +2,161 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy"
-          content="
-                  default-src 'self';
-                          img-src 'self' data:;
-                                  style-src 'self' 'unsafe-inline';
-                                  
-                                          script-src 'self';
-                                                  object-src 'none';
-                                                          base-uri 'none';
-                                                                  frame-ancestors 'none';
-                                                                          ">
 
-                                                                            <!-- 禁止页面被 iframe 嵌套（防点击劫持，兼容旧浏览器） -->
-                                                                              <meta http-equiv="X-Frame-Options" content="DENY">
+<!-- 安全策略（保留你的） -->
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none';">
 
-                                                                                <!-- 禁止浏览器猜测 MIME 类型 -->
-                                                                                  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-
-                                                                                    <!-- 限制 Referrer 泄露 -->
-                                                                                      <meta name="referrer" content="no-referrer">
-
-                                                                                        <!-- 移动端视口（非安全，但建议保留） -->
-                                                                                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                                                                          
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>二次元</title>
+
+<title>二次元导航</title>
 
 <style>
-body {
-  margin: 0;
-    background: #0e0e0e;
-      color: #ddd;
-        font-family: system-ui;
-        }
+:root{
+  --red:#b30000;
+  --darkred:#7a0000;
+  --gold:#ffd700;
+  --bg:#ffeaea;
+}
 
-        .container {
-          max-width: 900px;
-            margin: auto;
-              padding: 24px;
-              }
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:'Noto Sans SC',sans-serif;
+}
 
-              h1 {
-                text-align: center;
-                  margin-bottom: 24px;
-                  }
+/* 背景星 */
+.bg-star{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:120vw;
+  color:var(--gold);
+  opacity:0.06;
+  z-index:-1;
+}
 
-                  pre {
-                    white-space: pre-wrap;
-                      line-height: 1.7;
-                        background: #111;
-                          padding: 20px;
-                            border-radius: 8px;
-                            }
-                            a { color: #8ab4ff; }
-                            </style>
-                            </head>
+/* 主容器 */
+.container{
+  max-width:800px;
+  margin:auto;
+  padding:80px 20px;
+}
 
-                            <body>
-                            <div class="container">
-                            <h1>二次元导航站点</h1>
+/* 标题 */
+.title{
+  text-align:center;
+  font-size:32px;
+  color:var(--darkred);
+  margin-bottom:30px;
+  letter-spacing:3px;
+}
 
-                            <pre>
-请长按复制下面网址：<br><br>
-https://cryptostorm.is/paste/?7e521b6b3fe82486#9rZWBfH7jmgDrCzoQdX87Fx2wDaRXqseg4mNrzC5nmqJ<br><br>                             
-粘贴到Safari或者谷歌、edge这种6懒气。<br>
-🔑是：<br><br>hyw203096#H
-备用网址<br>
-https://enjoys.rocks/?1b22e482bf703d37#2RvGRmiapLSLy4wAktpMmYUst19JpqDriZLjNah4pGnL                             
-                              
-                              
-                            </pre>
+/* 卡片 */
+.card{
+  background:white;
+  border-radius:12px;
+  padding:25px;
+  box-shadow:0 10px 30px rgba(120,0,0,0.15);
+  line-height:1.8;
+  word-break:break-all;
+}
 
-                            </div>
-                            </body>
-                            </html>
+/* 按钮 */
+.copy-btn{
+  display:block;
+  margin:25px auto 0;
+  padding:12px 30px;
+  background:linear-gradient(135deg,var(--red),var(--darkred));
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:14px;
+  letter-spacing:2px;
+  transition:.2s;
+}
 
+.copy-btn:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.1);
+}
+
+/* 提示 */
+.toast{
+  position:fixed;
+  bottom:40px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.8);
+  color:#fff;
+  padding:10px 20px;
+  border-radius:6px;
+  font-size:13px;
+  opacity:0;
+  transition:.3s;
+}
+
+.toast.show{
+  opacity:1;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-star">★</div>
+
+<div class="container">
+  <div class="title">二次元导航站点</div>
+
+  <div class="card" id="content">
+请长按复制下面网址：
+
+https://cryptostorm.is/paste/?7e521b6b3fe82486#9rZWBfH7jmgDrCzoQdX87Fx2wDaRXqseg4mNrzC5nmqJ
+
+粘贴到Safari或者Chrome、Edge浏览器打开
+
+🔑：
+hyw203096#H备用网址
+
+备用：
+https://enjoys.rocks/?1b22e482bf703d37#2RvGRmiapLSLy4wAktpMmYUst19JpqDriZLjNah4pGnL
+  </div>
+
+  <button class="copy-btn" onclick="copyText()">一键复制全部内容</button>
+</div>
+
+<div class="toast" id="toast">已复制 ✔</div>
+
+<script>
+function copyText(){
+  const text = document.getElementById("content").innerText;
+
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(showToast);
+  }else{
+    // fallback
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+    showToast();
+  }
+}
+
+function showToast(){
+  const t = document.getElementById("toast");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1500);
+}
+</script>
+
+</body>
+</html>
