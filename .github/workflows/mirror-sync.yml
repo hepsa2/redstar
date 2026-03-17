@@ -1,25 +1,24 @@
 name: Mirror Sync
 
-
 on:
   schedule:
-    - cron: '0 2 * * *'   # 每天 UTC 02:00 执行（可按需修改）
+    - cron: '0 2 * * *'   # 每天 UTC 02:00 自动执行
   push:
     branches:
-      - main               # 也可以在每次 push 时触发
-  workflow_dispatch:       # 允许手动触发
+      - main               # main 分支有 push 时也触发
+  workflow_dispatch:       # 支持手动触发
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout with full history
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # 必须拉取完整历史，否则 mirror 会丢数据
+          fetch-depth: 0   # 拉取完整历史，避免 mirror 丢失提交
 
-      - name: Push mirror
-        env:
-          MIRROR_URL: https://${{ secrets.MIRROR_TOKEN }}@github.com/hepsa2/redrev0.git
+      - name: Push to mirror repository
         run: |
-          git push --mirror "$MIRROR_URL"
+          git config --unset-all http.https://github.com/.extraheader || true
+          git push --mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/hepsa2/redrev0.git
