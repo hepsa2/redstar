@@ -596,15 +596,62 @@
 
       // ── 注入函数 ──
       function injectContent() {
-        const c = _dec(_d);
-        if (!c) return;
+  const c = _dec(_d);
+  if (!c) return;
 
-        // 先驱者标题
-        const ph = document.getElementById("pioneerHeading");
-        if (ph) {
-          ph.textContent = c.p;
-          setTimeout(() => ph.classList.add("show"), 100);
-        }
+  // 先驱者标题
+  const ph = document.getElementById("pioneerHeading");
+  if (ph) {
+    ph.textContent = c.p;
+    // 强制触发重排后再加 show，确保 transition 生效
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => ph.classList.add("show"));
+    });
+  }
+
+  // 口号
+  const sl = document.getElementById("slogan");
+  if (sl) {
+    sl.textContent = c.s;
+  }
+
+  // 正文段落
+  const story = document.getElementById("storyBlock");
+  if (story && Array.isArray(c.l)) {
+    c.l.forEach((line, i) => {
+      const p = document.createElement("p");
+      p.textContent = line;
+      p.style.transitionDelay = (i * 0.08) + "s";
+      story.appendChild(p);
+    });
+  }
+
+  // 等 DOM 渲染完成后再检查滚动位置
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      checkScroll();
+      // 如果用户已经在页面底部（比如刷新后），强制让所有元素显示
+      forceShowAll();
+    });
+  });
+}
+
+// 对已经在视口内或接近视口的元素，直接强制显示
+function forceShowAll() {
+  const vh = window.innerHeight;
+  [
+    document.getElementById("slogan"),
+    document.getElementById("countdownWrap"),
+    ...document.querySelectorAll(".story p")
+  ].forEach(el => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    // 只要元素不是远在视口下方（超过 1.5 屏）就显示
+    if (rect.top < vh * 1.5) {
+      el.classList.add("show");
+    }
+  });
+}
 
         // 口号
         const sl = document.getElementById("slogan");
