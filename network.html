@@ -1,163 +1,226 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="no-referrer">
+  <title>二次元导航</title>
 
-  
-<!-- 安全策略（保留你的） -->
-<meta http-equiv="Content-Security-Policy"
-content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none';">
+  <!-- 使用系统中文字体栈，无需外部加载 -->
+  <style>
+    :root {
+      --red: #b30000;
+      --darkred: #7a0000;
+      --gold: #ffd700;
+      --bg: #ffeaea;
+    }
 
-<meta http-equiv="X-Frame-Options" content="DENY">
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta name="referrer" content="no-referrer">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    * {
+      box-sizing: border-box;
+    }
 
-<title>二次元导航</title>
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC",
+                   "WenQuanYi Micro Hei", sans-serif;
+    }
 
-<style>
-:root{
-  --red:#b30000;
-  --darkred:#7a0000;
-  --gold:#ffd700;
-  --bg:#ffeaea;
-}
+    /* 背景装饰星 */
+    .bg-star {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 120vw;
+      color: var(--gold);
+      opacity: 0.06;
+      z-index: -1;
+      pointer-events: none;
+      user-select: none;
+    }
 
-body{
-  margin:0;
-  background:var(--bg);
-  font-family:'Noto Sans SC',sans-serif;
-}
+    /* 主容器 */
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 80px 20px;
+    }
 
-/* 背景星 */
-.bg-star{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  font-size:120vw;
-  color:var(--gold);
-  opacity:0.06;
-  z-index:-1;
-}
+    /* 标题 */
+    .title {
+      text-align: center;
+      font-size: 32px;
+      color: var(--darkred);
+      margin-bottom: 30px;
+      letter-spacing: 3px;
+    }
 
-/* 主容器 */
-.container{
-  max-width:800px;
-  margin:auto;
-  padding:80px 20px;
-}
+    /* 卡片 */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px 30px;
+      box-shadow: 0 10px 30px rgba(120, 0, 0, 0.15);
+      line-height: 2;
+    }
 
-/* 标题 */
-.title{
-  text-align:center;
-  font-size:32px;
-  color:var(--darkred);
-  margin-bottom:30px;
-  letter-spacing:3px;
-}
+    /* 卡片内部区块 */
+    .link-block {
+      margin-bottom: 20px;
+    }
 
-/* 卡片 */
-.card{
-  background:white;
-  border-radius:12px;
-  padding:25px;
-  box-shadow:0 10px 30px rgba(120,0,0,0.15);
-  line-height:1.8;
-  word-break:break-all;
-}
+    .link-block:last-child {
+      margin-bottom: 0;
+    }
 
-/* 按钮 */
-.copy-btn{
-  display:block;
-  margin:25px auto 0;
-  padding:12px 30px;
-  background:linear-gradient(135deg,var(--red),var(--darkred));
-  color:white;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:14px;
-  letter-spacing:2px;
-  transition:.2s;
-}
+    .link-label {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
 
-.copy-btn:hover{
-  transform:translateY(-2px);
-  filter:brightness(1.1);
-}
+    .link-url {
+      font-size: 13px;
+      color: var(--darkred);
+      word-break: break-all;
+      background: #fff5f5;
+      border-left: 3px solid var(--red);
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+    }
 
-/* 提示 */
-.toast{
-  position:fixed;
-  bottom:40px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.8);
-  color:#fff;
-  padding:10px 20px;
-  border-radius:6px;
-  font-size:13px;
-  opacity:0;
-  transition:.3s;
-}
+    .key-row {
+      margin: 6px 0 20px;
+      font-size: 14px;
+      color: #333;
+    }
 
-.toast.show{
-  opacity:1;
-}
-</style>
+    .key-row span {
+      font-weight: bold;
+      color: var(--darkred);
+      background: #fff0f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+
+    /* 分割线 */
+    .divider {
+      border: none;
+      border-top: 1px dashed #f0c0c0;
+      margin: 20px 0;
+    }
+
+    /* 按钮 */
+    .copy-btn {
+      display: block;
+      margin: 25px auto 0;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, var(--red), var(--darkred));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      letter-spacing: 2px;
+      transition: 0.2s;
+    }
+
+    .copy-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .copy-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 提示 */
+    .toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      opacity: 0;
+      transition: 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="bg-star">★</div>
+  <div class="bg-star">★</div>
 
-<div class="container">
-  <div class="title">二次元导航站点</div>
+  <div class="container">
+    <div class="title">二次元导航站点</div>
 
-  <div class="card" id="content">
-请长按复制下面网址：
+    <div class="card">
 
-https://cryptostorm.is/paste/?7e521b6b3fe82486#9rZWBfH7jmgDrCzoQdX87Fx2wDaRXqseg4mNrzC5nmqJ
+      <div class="link-block">
+        <div class="link-label">🔗 主链接（Safari / Chrome / Edge 打开）</div>
+        <div class="link-url" id="url-main">
+          https://cryptostorm.is/paste/?7e521b6b3fe82486#9rZWBfH7jmgDrCzoQdX87Fx2wDaRXqseg4mNrzC5nmqJ
+        </div>
+      </div>
 
-粘贴到Safari或者Chrome、Edge浏览器打开
+      <div class="key-row">
+        🔑 访问密码：<span>hyw203096#H</span>
+      </div>
 
-🔑：
-hyw203096#H备用网址
+      <hr class="divider">
 
-备用：
-https://enjoys.rocks/?1b22e482bf703d37#2RvGRmiapLSLy4wAktpMmYUst19JpqDriZLjNah4pGnL
+      <div class="link-block">
+        <div class="link-label">🔗 备用链接</div>
+        <div class="link-url" id="url-backup">
+          https://enjoys.rocks/?1b22e482bf703d37#2RvGRmiapLSLy4wAktpMmYUst19JpqDriZLjNah4pGnL
+        </div>
+      </div>
+
+    </div>
+
+    <button class="copy-btn" onclick="copyAll()">一键复制全部内容</button>
   </div>
 
-  <button class="copy-btn" onclick="copyText()">一键复制全部内容</button>
-</div>
+  <div class="toast" id="toast">已复制 ✔</div>
 
-<div class="toast" id="toast">已复制 ✔</div>
+  <script>
+    // 统一使用现代 Clipboard API，移除已废弃的 execCommand
+    async function copyAll() {
+      const main   = document.getElementById('url-main').innerText.trim();
+      const backup = document.getElementById('url-backup').innerText.trim();
+      const text   = `主链接：${main}\n\n访问密码：hyw203096#H\n\n备用链接：${backup}`;
 
-<script>
-function copyText(){
-  const text = document.getElementById("content").innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('已复制 ✔');
+      } catch {
+        showToast('复制失败，请手动选取');
+      }
+    }
 
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(showToast);
-  }else{
-    // fallback
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    textarea.remove();
-    showToast();
-  }
-}
-
-function showToast(){
-  const t = document.getElementById("toast");
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1500);
-}
-</script>
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    }
+  </script>
 
 </body>
 </html>
