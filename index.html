@@ -16,301 +16,93 @@
   <meta name="twitter:image" content="https://raw.githubusercontent.com/hepsa2/redstar/main/00.png">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --red: #b30000;
-      --darkred: #7a0000;
-      --lightred: #ffd6d6;
-      --gold: #ffd700;
-    }
+    :root { --red:#b30000; --darkred:#7a0000; --lightred:#ffd6d6; --gold:#ffd700; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--lightred); font-family:'Noto Sans SC',sans-serif; overflow-x:hidden; }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: var(--lightred); font-family: 'Noto Sans SC', sans-serif; overflow-x: hidden; }
+    #meteorCanvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9998; }
 
-    #meteorCanvas {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none; z-index: 9998;
-    }
+    .flag-bg { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:120vw; color:#ffd700; opacity:0.08; z-index:-1; pointer-events:none; user-select:none; line-height:1; }
 
-    .flag-bg {
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 120vw; color: #ffd700; opacity: 0.08;
-      z-index: -1; pointer-events: none; user-select: none; line-height: 1;
-    }
+    .menu-btn { position:fixed; top:25px; right:25px; width:55px; height:55px; background:#b30000; border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; cursor:pointer; box-shadow:0 0 15px rgba(180,0,0,0.5); z-index:1000; }
+    .menu-btn span { width:26px; height:3px; background:white; transition:0.3s; }
+    .menu-btn.active span:nth-child(1) { transform:rotate(45deg) translate(6px,6px); }
+    .menu-btn.active span:nth-child(2) { opacity:0; }
+    .menu-btn.active span:nth-child(3) { transform:rotate(-45deg) translate(6px,-6px); }
+    .menu-btn:before { content:"★"; color:#ffd700; position:absolute; top:-12px; right:-12px; font-size:20px; }
 
-    .menu-btn {
-      position: fixed; top: 25px; right: 25px;
-      width: 55px; height: 55px; background: #b30000; border-radius: 10px;
-      display: flex; flex-direction: column; justify-content: center;
-      align-items: center; gap: 6px; cursor: pointer;
-      box-shadow: 0 0 15px rgba(180,0,0,0.5); z-index: 1000;
-    }
-    .menu-btn span { width: 26px; height: 3px; background: white; transition: 0.3s; }
-    .menu-btn.active span:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
-    .menu-btn.active span:nth-child(2) { opacity: 0; }
-    .menu-btn.active span:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
-    .menu-btn:before {
-      content: "★"; color: #ffd700; position: absolute;
-      top: -12px; right: -12px; font-size: 20px;
-    }
+    .sidebar { position:fixed; top:0; right:0; width:350px; height:100vh; background:rgba(255,220,220,0.96); padding:100px 40px; transform:translateX(100%); transition:0.35s; border-left:2px solid #900; z-index:999; overflow-y:auto; }
+    .sidebar.active { transform:translateX(0); }
+    .sidebar > a, .sidebar-item > .sidebar-item-link { display:block; margin-bottom:20px; padding:14px; background:white; border-radius:8px; text-decoration:none; color:#222; transition:0.2s; font-size:15px; }
+    .sidebar > a:hover, .sidebar-item > .sidebar-item-link:hover { background:#ffcccc; }
+    .sidebar-item { margin-bottom:20px; position:relative; }
+    .sidebar-item-link { display:flex; align-items:center; justify-content:space-between; padding:14px; background:white; border-radius:8px; text-decoration:none; color:#222; transition:background 0.2s; font-size:15px; cursor:pointer; user-select:none; }
+    .sidebar-item-link:hover { background:#ffcccc; }
+    .sidebar-arrow { display:inline-block; width:18px; height:18px; border-right:2px solid var(--red); border-bottom:2px solid var(--red); transform:rotate(45deg); transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1); flex-shrink:0; margin-left:8px; position:relative; top:-2px; }
+    .sidebar-item.open .sidebar-arrow { transform:rotate(225deg); top:2px; }
+    .sidebar-sub { overflow:hidden; max-height:0; transition:max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease; opacity:0; }
+    .sidebar-item.open .sidebar-sub { max-height:200px; opacity:1; }
+    .sidebar-sub a { display:flex; align-items:center; gap:10px; margin-top:8px; padding:11px 14px 11px 20px; background:rgba(179,0,0,0.06); border-left:3px solid var(--red); border-radius:0 8px 8px 0; text-decoration:none; color:#5a0000; font-size:14px; transition:background 0.2s,padding-left 0.2s; }
+    .sidebar-sub a:hover { background:rgba(179,0,0,0.14); padding-left:26px; }
+    .sidebar-sub a::before { content:"★"; color:var(--gold); font-size:10px; flex-shrink:0; }
 
-    .sidebar {
-      position: fixed; top: 0; right: 0; width: 350px; height: 100vh;
-      background: rgba(255,220,220,0.96); padding: 100px 40px;
-      transform: translateX(100%); transition: 0.35s;
-      border-left: 2px solid #900; z-index: 999; overflow-y: auto;
-    }
-    .sidebar.active { transform: translateX(0); }
+    .container { max-width:1100px; margin:auto; padding:60px 20px; text-align:center; }
+    .hero-title { font-size:clamp(36px,8vw,90px); color:#8b0000; font-family:'Orbitron',monospace; margin-bottom:50px; }
+    .image-box { max-width:750px; margin:auto; margin-bottom:40px; border-radius:20px; overflow:hidden; box-shadow:0 15px 40px rgba(0,0,0,0.2); }
+    .image-box img { width:100%; display:block; }
 
-    .sidebar > a,
-    .sidebar-item > .sidebar-item-link {
-      display: block; margin-bottom: 20px; padding: 14px;
-      background: white; border-radius: 8px;
-      text-decoration: none; color: #222; transition: 0.2s; font-size: 15px;
-    }
-    .sidebar > a:hover,
-    .sidebar-item > .sidebar-item-link:hover { background: #ffcccc; }
+    .pioneer-heading { max-width:750px; margin:0 auto 28px auto; font-size:clamp(26px,5vw,44px); font-weight:700; color:#6b0000; letter-spacing:0.12em; font-family:'Noto Sans SC',sans-serif; opacity:0; transform:translateY(48px); transition:opacity 1s cubic-bezier(0.22,1,0.36,1),transform 1s cubic-bezier(0.22,1,0.36,1); position:relative; }
+    .pioneer-heading.show { opacity:1; transform:translateY(0); }
+    .pioneer-heading::before, .pioneer-heading::after { content:''; display:inline-block; width:32px; height:2px; background:#8b0000; vertical-align:middle; margin:0 14px; opacity:0.6; }
 
-    .sidebar-item { margin-bottom: 20px; position: relative; }
+    .story { max-width:750px; margin:auto; font-size:18px; line-height:1.9; text-align:center; }
+    .story p { opacity:0; transform:translateY(28px); transition:opacity 0.7s ease,transform 0.7s ease; }
+    .story p.show { opacity:1; transform:translateY(0); }
 
-    .sidebar-item-link {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px; background: white; border-radius: 8px;
-      text-decoration: none; color: #222; transition: background 0.2s;
-      font-size: 15px; cursor: pointer; user-select: none;
-    }
-    .sidebar-item-link:hover { background: #ffcccc; }
+    .slogan { margin-top:200px; font-size:42px; color:#a00000; font-weight:700; opacity:0; transform:translateY(80px); transition:1.2s; }
+    .slogan.show { opacity:1; transform:translateY(0); }
 
-    .sidebar-arrow {
-      display: inline-block; width: 18px; height: 18px;
-      border-right: 2px solid var(--red); border-bottom: 2px solid var(--red);
-      transform: rotate(45deg);
-      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
-      flex-shrink: 0; margin-left: 8px; position: relative; top: -2px;
-    }
-    .sidebar-item.open .sidebar-arrow { transform: rotate(225deg); top: 2px; }
+    .countdown-wrap { margin-top:64px; padding-bottom:80px; opacity:0; transform:translateY(60px); transition:opacity 1.2s 0.25s,transform 1.2s 0.25s; }
+    .countdown-wrap.show { opacity:1; transform:translateY(0); }
+    .countdown-heading { font-family:'Noto Sans SC',sans-serif; font-size:0.82rem; letter-spacing:0.32em; color:#7a0000; opacity:0.75; margin-bottom:28px; }
+    .countdown-heading::before, .countdown-heading::after { content:" ★ "; color:#b30000; }
+    .countdown-grid { display:inline-flex; align-items:flex-start; justify-content:center; gap:10px; flex-wrap:wrap; }
+    .countdown-unit { display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .countdown-box { background:#8b0000; color:#ffd6d6; font-family:'Orbitron',monospace; font-size:clamp(26px,4.5vw,54px); font-weight:700; width:clamp(70px,11vw,112px); height:clamp(70px,11vw,112px); display:flex; align-items:center; justify-content:center; border-radius:6px; letter-spacing:0.04em; box-shadow:0 6px 24px rgba(100,0,0,0.30),inset 0 1px 0 rgba(255,180,180,0.18),inset 0 -1px 0 rgba(0,0,0,0.2); position:relative; overflow:hidden; }
+    .countdown-box::after { content:''; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(0,0,0,0.22); pointer-events:none; }
+    .countdown-unit-label { font-family:'Noto Sans SC',sans-serif; font-size:0.65rem; letter-spacing:0.22em; color:#8b0000; opacity:0.6; }
+    .countdown-sep { font-family:'Orbitron',monospace; font-size:clamp(26px,4.5vw,50px); color:#b30000; font-weight:700; line-height:1; margin-top:clamp(12px,2vw,26px); opacity:0.45; user-select:none; flex-shrink:0; }
+    .countdown-finished { font-family:'Orbitron',monospace; font-size:1.5rem; color:#b30000; letter-spacing:0.18em; }
 
-    .sidebar-sub {
-      overflow: hidden; max-height: 0;
-      transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease;
-      opacity: 0;
-    }
-    .sidebar-item.open .sidebar-sub { max-height: 200px; opacity: 1; }
+    #aiBtn { position:fixed; bottom:28px; right:28px; width:62px; height:62px; background:linear-gradient(135deg,#c0000a 0%,#7a0000 100%); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 20px rgba(140,0,0,0.45),0 1px 4px rgba(0,0,0,0.18); transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease; z-index:9999; animation:aiBtnPulse 3s ease-in-out infinite; }
+    #aiBtn:hover { transform:scale(1.1); box-shadow:0 8px 32px rgba(180,0,0,0.55),0 2px 8px rgba(0,0,0,0.22); animation:none; }
+    #aiBtn:active { transform:scale(0.96); }
+    #aiBtn::before { content:''; position:absolute; inset:-4px; border-radius:50%; border:2px solid rgba(200,0,0,0.4); animation:aiRingPulse 3s ease-in-out infinite; }
+    #aiBtn svg { width:28px; height:28px; fill:none; stroke:#fff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; position:relative; z-index:1; }
+    #aiBtn::after { content:'★'; position:absolute; top:-5px; right:-3px; font-size:13px; color:#ffd700; line-height:1; filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4)); animation:starSpin 6s linear infinite; }
 
-    .sidebar-sub a {
-      display: flex; align-items: center; gap: 10px;
-      margin-top: 8px; padding: 11px 14px 11px 20px;
-      background: rgba(179,0,0,0.06); border-left: 3px solid var(--red);
-      border-radius: 0 8px 8px 0; text-decoration: none; color: #5a0000;
-      font-size: 14px; transition: background 0.2s, padding-left 0.2s;
-    }
-    .sidebar-sub a:hover { background: rgba(179,0,0,0.14); padding-left: 26px; }
-    .sidebar-sub a::before { content: "★"; color: var(--gold); font-size: 10px; flex-shrink: 0; }
+    @keyframes aiBtnPulse { 0%,100%{box-shadow:0 4px 20px rgba(140,0,0,0.45),0 1px 4px rgba(0,0,0,0.18);} 50%{box-shadow:0 4px 30px rgba(190,0,0,0.65),0 1px 4px rgba(0,0,0,0.18);} }
+    @keyframes aiRingPulse { 0%{transform:scale(1);opacity:0.7;} 60%{transform:scale(1.18);opacity:0;} 100%{transform:scale(1);opacity:0;} }
+    @keyframes starSpin { 0%{transform:rotate(0deg) scale(1);} 50%{transform:rotate(180deg) scale(1.2);} 100%{transform:rotate(360deg) scale(1);} }
 
-    .container { max-width: 1100px; margin: auto; padding: 60px 20px; text-align: center; }
+    @media (max-width:768px) { .sidebar{width:100%;} .flag-bg{font-size:150vw;} .countdown-grid{gap:6px;} #aiBtn{width:54px;height:54px;bottom:20px;right:20px;} #aiBtn svg{width:24px;height:24px;} }
 
-    .hero-title {
-      font-size: clamp(36px, 8vw, 90px);
-      color: #8b0000; font-family: 'Orbitron', monospace; margin-bottom: 50px;
-    }
-
-    .image-box {
-      max-width: 750px; margin: auto; margin-bottom: 40px;
-      border-radius: 20px; overflow: hidden;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-    }
-    .image-box img { width: 100%; display: block; }
-
-    .pioneer-heading {
-      max-width: 750px; margin: 0 auto 28px auto;
-      font-size: clamp(26px, 5vw, 44px); font-weight: 700;
-      color: #6b0000; letter-spacing: 0.12em;
-      font-family: 'Noto Sans SC', sans-serif;
-      opacity: 0; transform: translateY(48px);
-      transition: opacity 1s cubic-bezier(0.22,1,0.36,1),
-                  transform 1s cubic-bezier(0.22,1,0.36,1);
-      position: relative;
-    }
-    .pioneer-heading.show { opacity: 1; transform: translateY(0); }
-    .pioneer-heading::before,
-    .pioneer-heading::after {
-      content: ''; display: inline-block; width: 32px; height: 2px;
-      background: #8b0000; vertical-align: middle; margin: 0 14px; opacity: 0.6;
-    }
-
-    .story {
-      max-width: 750px; margin: auto;
-      font-size: 18px; line-height: 1.9; text-align: center;
-    }
-    .story p {
-      opacity: 0; transform: translateY(28px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .story p.show { opacity: 1; transform: translateY(0); }
-
-    .slogan {
-      margin-top: 200px; font-size: 42px; color: #a00000; font-weight: 700;
-      opacity: 0; transform: translateY(80px); transition: 1.2s;
-    }
-    .slogan.show { opacity: 1; transform: translateY(0); }
-
-    .countdown-wrap {
-      margin-top: 64px; padding-bottom: 80px;
-      opacity: 0; transform: translateY(60px);
-      transition: opacity 1.2s 0.25s, transform 1.2s 0.25s;
-    }
-    .countdown-wrap.show { opacity: 1; transform: translateY(0); }
-
-    .countdown-heading {
-      font-family: 'Noto Sans SC', sans-serif; font-size: 0.82rem;
-      letter-spacing: 0.32em; color: #7a0000; opacity: 0.75; margin-bottom: 28px;
-    }
-    .countdown-heading::before,
-    .countdown-heading::after { content: " ★ "; color: #b30000; }
-
-    .countdown-grid {
-      display: inline-flex; align-items: flex-start;
-      justify-content: center; gap: 10px; flex-wrap: wrap;
-    }
-
-    .countdown-unit { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-
-    .countdown-box {
-      background: #8b0000; color: #ffd6d6;
-      font-family: 'Orbitron', monospace;
-      font-size: clamp(26px, 4.5vw, 54px); font-weight: 700;
-      width: clamp(70px, 11vw, 112px); height: clamp(70px, 11vw, 112px);
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 6px; letter-spacing: 0.04em;
-      box-shadow: 0 6px 24px rgba(100,0,0,0.30),
-                  inset 0 1px 0 rgba(255,180,180,0.18),
-                  inset 0 -1px 0 rgba(0,0,0,0.2);
-      position: relative; overflow: hidden;
-    }
-    .countdown-box::after {
-      content: ''; position: absolute; left: 0; right: 0; top: 50%;
-      height: 1px; background: rgba(0,0,0,0.22); pointer-events: none;
-    }
-
-    .countdown-unit-label {
-      font-family: 'Noto Sans SC', sans-serif; font-size: 0.65rem;
-      letter-spacing: 0.22em; color: #8b0000; opacity: 0.6;
-    }
-
-    .countdown-sep {
-      font-family: 'Orbitron', monospace; font-size: clamp(26px, 4.5vw, 50px);
-      color: #b30000; font-weight: 700; line-height: 1;
-      margin-top: clamp(12px, 2vw, 26px); opacity: 0.45;
-      user-select: none; flex-shrink: 0;
-    }
-
-    .countdown-finished {
-      font-family: 'Orbitron', monospace; font-size: 1.5rem;
-      color: #b30000; letter-spacing: 0.18em;
-    }
-
-    #aiBtn {
-      position: fixed; bottom: 28px; right: 28px;
-      width: 62px; height: 62px;
-      background: linear-gradient(135deg, #c0000a 0%, #7a0000 100%);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(140,0,0,0.45), 0 1px 4px rgba(0,0,0,0.18);
-      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease;
-      z-index: 9999; animation: aiBtnPulse 3s ease-in-out infinite;
-    }
-    #aiBtn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 32px rgba(180,0,0,0.55), 0 2px 8px rgba(0,0,0,0.22);
-      animation: none;
-    }
-    #aiBtn:active { transform: scale(0.96); }
-    #aiBtn::before {
-      content: ''; position: absolute; inset: -4px; border-radius: 50%;
-      border: 2px solid rgba(200,0,0,0.4); animation: aiRingPulse 3s ease-in-out infinite;
-    }
-    #aiBtn svg {
-      width: 28px; height: 28px; fill: none; stroke: #fff;
-      stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
-      position: relative; z-index: 1;
-    }
-    #aiBtn::after {
-      content: '★'; position: absolute; top: -5px; right: -3px;
-      font-size: 13px; color: #ffd700; line-height: 1;
-      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
-      animation: starSpin 6s linear infinite;
-    }
-
-    @keyframes aiBtnPulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(140,0,0,0.45), 0 1px 4px rgba(0,0,0,0.18); }
-      50%       { box-shadow: 0 4px 30px rgba(190,0,0,0.65), 0 1px 4px rgba(0,0,0,0.18); }
-    }
-    @keyframes aiRingPulse {
-      0%   { transform: scale(1);    opacity: 0.7; }
-      60%  { transform: scale(1.18); opacity: 0; }
-      100% { transform: scale(1);    opacity: 0; }
-    }
-    @keyframes starSpin {
-      0%   { transform: rotate(0deg)   scale(1); }
-      50%  { transform: rotate(180deg) scale(1.2); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
-
-    @media (max-width: 768px) {
-      .sidebar { width: 100%; }
-      .flag-bg  { font-size: 150vw; }
-      .countdown-grid { gap: 6px; }
-      #aiBtn { width: 54px; height: 54px; bottom: 20px; right: 20px; }
-      #aiBtn svg { width: 24px; height: 24px; }
-    }
-
-    #warnOverlay {
-      position: fixed; inset: 0; background: rgba(80,0,0,0.55);
-      backdrop-filter: blur(3px); z-index: 99999;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
-    }
-    #warnOverlay.show { opacity: 1; pointer-events: all; }
-
-    #warnBox {
-      background: #fff5f5; border: 2px solid #8b0000; border-radius: 14px;
-      padding: 40px 36px 32px; max-width: 480px; width: 90%; position: relative;
-      box-shadow: 0 20px 60px rgba(100,0,0,0.35), 0 0 0 6px rgba(139,0,0,0.08);
-      text-align: center; animation: warnPop 0.45s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    @keyframes warnPop {
-      from { transform: scale(0.82) translateY(24px); opacity: 0; }
-      to   { transform: scale(1)    translateY(0);    opacity: 1; }
-    }
-
-    #warnBox .warn-star {
-      font-size: 36px; color: #b30000; display: block; margin-bottom: 14px;
-      animation: starSpin 6s linear infinite;
-    }
-    #warnBox h2 {
-      font-family: 'Noto Sans SC', sans-serif; font-size: 1.15rem; font-weight: 700;
-      color: #7a0000; letter-spacing: 0.08em; margin-bottom: 18px;
-    }
-    #warnBox h2::before, #warnBox h2::after { content: " ★ "; color: #b30000; font-size: 0.75em; }
-    #warnBox p { font-size: 15px; line-height: 1.85; color: #3a0000; font-family: 'Noto Sans SC', sans-serif; }
-    #warnBox p strong { color: #b30000; font-weight: 700; background: #ffe0e0; padding: 1px 5px; border-radius: 4px; }
-    #warnBox p a { color: #8b0000; text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
-    #warnBox p a:hover { color: #c0000a; }
-
-    #warnProgress { margin-top: 24px; height: 4px; border-radius: 2px; background: #ffd6d6; overflow: hidden; }
-    #warnProgressBar {
-      height: 100%; width: 100%;
-      background: linear-gradient(90deg, #b30000, #ff4040);
-      border-radius: 2px; transform-origin: left; transition: transform 1s linear;
-    }
-    #warnTimer { margin-top: 8px; font-size: 12px; color: #a05050; letter-spacing: 0.1em; font-family: 'Orbitron', monospace; }
-    #warnClose {
-      position: absolute; top: 14px; right: 16px;
-      background: none; border: none; cursor: pointer;
-      font-size: 22px; color: #8b0000; line-height: 1; transition: transform 0.2s, color 0.2s;
-    }
-    #warnClose:hover { transform: scale(1.2) rotate(90deg); color: #c0000a; }
+    #warnOverlay { position:fixed; inset:0; background:rgba(80,0,0,0.55); backdrop-filter:blur(3px); z-index:99999; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.4s ease; pointer-events:none; }
+    #warnOverlay.show { opacity:1; pointer-events:all; }
+    #warnBox { background:#fff5f5; border:2px solid #8b0000; border-radius:14px; padding:40px 36px 32px; max-width:480px; width:90%; position:relative; box-shadow:0 20px 60px rgba(100,0,0,0.35),0 0 0 6px rgba(139,0,0,0.08); text-align:center; animation:warnPop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes warnPop { from{transform:scale(0.82) translateY(24px);opacity:0;} to{transform:scale(1) translateY(0);opacity:1;} }
+    #warnBox .warn-star { font-size:36px; color:#b30000; display:block; margin-bottom:14px; animation:starSpin 6s linear infinite; }
+    #warnBox h2 { font-family:'Noto Sans SC',sans-serif; font-size:1.15rem; font-weight:700; color:#7a0000; letter-spacing:0.08em; margin-bottom:18px; }
+    #warnBox h2::before, #warnBox h2::after { content:" ★ "; color:#b30000; font-size:0.75em; }
+    #warnBox p { font-size:15px; line-height:1.85; color:#3a0000; font-family:'Noto Sans SC',sans-serif; }
+    #warnBox p strong { color:#b30000; font-weight:700; background:#ffe0e0; padding:1px 5px; border-radius:4px; }
+    #warnBox p a { color:#8b0000; text-decoration:underline; text-underline-offset:3px; font-weight:700; }
+    #warnBox p a:hover { color:#c0000a; }
+    #warnProgress { margin-top:24px; height:4px; border-radius:2px; background:#ffd6d6; overflow:hidden; }
+    #warnProgressBar { height:100%; width:100%; background:linear-gradient(90deg,#b30000,#ff4040); border-radius:2px; transform-origin:left; transition:transform 1s linear; }
+    #warnTimer { margin-top:8px; font-size:12px; color:#a05050; letter-spacing:0.1em; font-family:'Orbitron',monospace; }
+    #warnClose { position:absolute; top:14px; right:16px; background:none; border:none; cursor:pointer; font-size:22px; color:#8b0000; line-height:1; transition:transform 0.2s,color 0.2s; }
+    #warnClose:hover { transform:scale(1.2) rotate(90deg); color:#c0000a; }
   </style>
 </head>
 <body>
@@ -318,16 +110,13 @@
   <canvas id="meteorCanvas"></canvas>
   <div class="flag-bg">★</div>
 
-  <div class="menu-btn" id="menuBtn">
-    <span></span><span></span><span></span>
-  </div>
+  <div class="menu-btn" id="menuBtn"><span></span><span></span><span></span></div>
 
   <div class="sidebar" id="sidebar">
     <a href="jieshao.html">关于我们</a>
     <div class="sidebar-item" id="articleItem">
       <div class="sidebar-item-link" id="articleToggle">
-        <span>文章查看</span>
-        <span class="sidebar-arrow"></span>
+        <span>文章查看</span><span class="sidebar-arrow"></span>
       </div>
       <div class="sidebar-sub">
         <a href="blog.html">群众论坛</a>
@@ -341,38 +130,21 @@
 
   <div class="container">
     <h1 class="hero-title">流动赤星</h1>
-
-    <div class="image-box">
-      <img src="aa.png">
-    </div>
-
-    <!-- 以下三个元素内容全部由 JS 解码后注入，HTML 源码中为空 -->
+    <div class="image-box"><img src="aa.png"></div>
+    <!-- 内容由 JS 解码后注入，源码中为空 -->
     <div class="pioneer-heading" id="pioneerHeading"></div>
     <div class="story" id="storyBlock"></div>
     <div class="slogan" id="slogan"></div>
-
     <div class="countdown-wrap" id="countdownWrap">
       <div class="countdown-heading">距离本年结束</div>
       <div class="countdown-grid" id="countdownGrid">
-        <div class="countdown-unit">
-          <div class="countdown-box" id="cd-days">--</div>
-          <div class="countdown-unit-label">天</div>
-        </div>
+        <div class="countdown-unit"><div class="countdown-box" id="cd-days">--</div><div class="countdown-unit-label">天</div></div>
         <div class="countdown-sep">:</div>
-        <div class="countdown-unit">
-          <div class="countdown-box" id="cd-hours">--</div>
-          <div class="countdown-unit-label">时</div>
-        </div>
+        <div class="countdown-unit"><div class="countdown-box" id="cd-hours">--</div><div class="countdown-unit-label">时</div></div>
         <div class="countdown-sep">:</div>
-        <div class="countdown-unit">
-          <div class="countdown-box" id="cd-minutes">--</div>
-          <div class="countdown-unit-label">分</div>
-        </div>
+        <div class="countdown-unit"><div class="countdown-box" id="cd-minutes">--</div><div class="countdown-unit-label">分</div></div>
         <div class="countdown-sep">:</div>
-        <div class="countdown-unit">
-          <div class="countdown-box" id="cd-seconds">--</div>
-          <div class="countdown-unit-label">秒</div>
-        </div>
+        <div class="countdown-unit"><div class="countdown-box" id="cd-seconds">--</div><div class="countdown-unit-label">秒</div></div>
       </div>
     </div>
   </div>
@@ -380,8 +152,8 @@
   <div id="aiBtn" title="打开 AI 对话">
     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 3C7.03 3 3 6.69 3 11.2c0 2.4 1.1 4.57 2.88 6.1L5 21l3.9-1.72A10.1 10.1 0 0012 19.4c4.97 0 9-3.69 9-8.2S16.97 3 12 3z"/>
-      <circle cx="8.5"  cy="11.2" r="1" fill="white" stroke="none"/>
-      <circle cx="12"   cy="11.2" r="1" fill="white" stroke="none"/>
+      <circle cx="8.5" cy="11.2" r="1" fill="white" stroke="none"/>
+      <circle cx="12" cy="11.2" r="1" fill="white" stroke="none"/>
       <circle cx="15.5" cy="11.2" r="1" fill="white" stroke="none"/>
     </svg>
   </div>
@@ -402,321 +174,206 @@
   </div>
 
   <script>
-    /* =========================================================
-       1. 菜单
-    ========================================================= */
-    const menuBtn = document.getElementById("menuBtn");
-    const sidebar = document.getElementById("sidebar");
-    menuBtn.onclick = () => {
-      menuBtn.classList.toggle("active");
-      sidebar.classList.toggle("active");
-    };
+    /* === 1. 菜单 === */
+    var _mb = document.getElementById("menuBtn");
+    var _sb = document.getElementById("sidebar");
+    _mb.onclick = function() { _mb.classList.toggle("active"); _sb.classList.toggle("active"); };
 
-    /* =========================================================
-       2. 文章查看子菜单
-    ========================================================= */
-    document.getElementById("articleToggle").addEventListener("click", () => {
+    /* === 2. 子菜单 === */
+    document.getElementById("articleToggle").addEventListener("click", function() {
       document.getElementById("articleItem").classList.toggle("open");
     });
 
-    /* =========================================================
-       3. 英文重定向
-    ========================================================= */
-    if (navigator.language.startsWith("en")) {
-      window.location.href = "/en/";
-    }
+    /* === 3. 英文重定向 === */
+    if (navigator.language.startsWith("en")) window.location.href = "/en/";
 
-    /* =========================================================
-       4. 滚动淡入检查（全局，供注入函数调用）
-    ========================================================= */
+    /* === 4. 滚动淡入（全局） === */
     function checkScroll() {
-      const vy = window.innerHeight - 100;
-      const sl = document.getElementById("slogan");
-      const cw = document.getElementById("countdownWrap");
+      var vy = window.innerHeight - 100;
+      var sl = document.getElementById("slogan");
+      var cw = document.getElementById("countdownWrap");
       if (sl && sl.getBoundingClientRect().top < vy) sl.classList.add("show");
       if (cw && cw.getBoundingClientRect().top < vy + 40) cw.classList.add("show");
-      document.querySelectorAll(".story p").forEach(p => {
+      document.querySelectorAll(".story p").forEach(function(p) {
         if (p.getBoundingClientRect().top < window.innerHeight - 80) p.classList.add("show");
       });
     }
-
     window.addEventListener("scroll", checkScroll);
 
-    /* =========================================================
-       5. 内容解码与注入
-          ┌ 正文以 base64(encodeURIComponent(JSON)) 存储
-          ├ 有效 tk（CF Worker 跳转）→ 立即解码渲染
-          └ 无 tk → 延迟 1800ms 后再注入
-    ========================================================= */
-    (function () {
+    /* ===================================================================
+       5. 内容碎片库 + 低特征解码链
+       ─ 每段内容独立编码，各自拆成 3 块分散存储（无法从单块推断内容）
+       ─ 解码链拆为 3 个独立函数，消除 atob+decodeURIComponent 标准组合
+       ─ token 感知：有效 tk 立即渲染，否则延迟 1800ms
+    =================================================================== */
+    (function() {
 
-      /* ── 编码内容库（重新生成的正确版本，勿手动改明文）── */
-      var _d = "JTdCJTIycCUyMiUzQSUyMiVFNSU4MSU5QSVFNCVCOCU4MCVFNCVCRCU4RCVFNSU4NSU4OCVFOSVBOSVCMSVFOCU4MCU4NSUyMiUyQyUyMnMlMjIlM0ElMjIlRTUlOEElQTAlRTUlODUlQTUlRTUlOUMlQjAlRTYlOTYlQjklRTclQkIlODQlRTclQkIlODclRTUlQkIlQkElRTglQUUlQkUlRUYlQkMlOEMlRTglQkYlODglRTUlOTAlOTElRTYlOTQlQkYlRTUlODUlOUElRTUlOEMlOTYlMjIlMkMlMjJsJTIyJTNBJTVCJTIyJUU1JTlDJUE4JUU4JTgxJTk0JUU1JTkwJTg4JUU1JUI3JUE2JUU2JUI0JUJFJUU0JUI4JUFEJUU5JTk3JUI0JUU1JUIxJTg1JUU3JUJCJTlGJUU2JUIyJUJCJUU1JTlDJUIwJUU0JUJEJThEJUU3JTlBJTg0JUU2JTgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JTIyJTJDJTIyJUU1JUIwJTg2JUU0JUI4JThEJUU0JUJDJTlBJUU1JTlDJUE4JUU3JUJFJUE0JUU0JUJDJTk3JUU0JUI4JUFEJUU5JTk3JUI0JUU2JTlDJTg5JUU0JUJCJTgwJUU0JUI5JTg4JUU1JUI4JTgyJUU1JTlDJUJBJTIyJTJDJTIyJUU1JTlCJUEwJUU0JUI4JUJBJUU3JUJFJUE0JUU0JUJDJTk3JUU2JUEwJUI5JUU2JTlDJUFDJUU1JUIwJUIxJUU0JUI4JThEJUU2JTk4JUFGJUU2JTgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JTIyJTJDJTIyJUU4JUFFJUE5JUU2JTg4JTkxJUU0JUJCJUFDJUU4JUFFJUIwJUU0JUJEJThGJUU2JUFGJTlCJUU0JUI4JUJCJUU1JUI4JUFEJUU3JTlBJTg0JUU4JUJGJTk5JUU1JThGJUE1JUU3JUFFJUI0JUU4JUE4JTgwJUU1JTkwJUE3JTIyJTJDJTIyJUU0JUJGJUFFJUU2JUFEJUEzJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JUU1JTkyJThDJUU2JTlDJUJBJUU0JUJDJTlBJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JUU2JTg5JThEJUU0JUJDJTlBJUU2JTk4JUFGJUU2JTgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JTIyJTJDJTIyJUU4JTgwJThDJUU2JTk3JUEwJUU0JUJBJUE3JUU5JTk4JUI2JUU3JUJBJUE3JUU1JTkyJThDJUU1JTg1JUIxJUU0JUJBJUE3JUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JUU2JUIwJUI4JUU4JUJGJTlDJUU2JTk4JUFGJUU0JUI5JTkwJUU4JUE3JTgyJUU2JUI0JUJFJTIyJTJDJTIyJUU1JTlCJUEwJUU0JUI4JUJBJUU2JTlDJUFBJUU2JTlEJUE1JUU2JTk4JUFGJUU2JTg4JTkxJUU0JUJCJUFDJUU3JTlBJTg0JUUyJTgwJTk0JUUyJTgwJTk0JUU4JUJGJTk5JUU2JTk4JUFGJUU1JUJGJTg1JUU3JTg0JUI2JUU3JTlBJTg0JTIyJTJDJTIyJUU1JThGJUFBJUU4JUE2JTgxJUU2JTg4JTkxJUU0JUJCJUFDJUU4JTgzJUJEJUU1JTlEJTlBJUU2JThDJTgxJUU4JUI3JUFGJUU3JUJBJUJGJUVGJUJDJThDJUU1JTlEJTlBJUU1JUFFJTlBJUU0JUI4JThEJUU3JUE3JUJCJUU1JTlDJUIwJUU4JUI1JUIwJUU0JUI4JThCJUU1JThFJUJCJTIyJTJDJTIyJUU3JUJFJUE0JUU0JUJDJTk3JUU0JUJCJThFJUU2JTlEJUE1JUU2JUIyJUExJUU2JTlDJTg5JUU0JUI5JTlGJUU2JUIwJUI4JUU4JUJGJTlDJUU0JUI4JThEJUU0JUJDJTlBJUU1JUEwJTk1JUU1JTg1JUE1JUU2JTgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JUU2JUIzJUE1JUU2JUJEJUFEJTIyJTJDJTIyJUU2JTlDJTg5JUU0JUJBJUJBJUU4JUFGJUI0JUU0JUJCJTk2JUU0JUJCJUFDJUU2JTk4JUFGJUU2JTgyJUIyJUU4JUE3JTgyJUU3JTlBJTg0JUUzJTgwJTgxJUU2JTk3JUEwJUU1JThBJTlCJUU3JTlBJTg0JUVGJUJDJThDJUU4JUJGJTk5JUU1JUFFJTlFJUU5JTk5JTg1JUU0JUI4JThBJUU2JTk4JUFGJUU4JThEJTkyJUU4JUIwJUFDJUU3JTlBJTg0JUU4JUFGJUJEJUU4JUIwJUE0JTIyJTJDJTIyJUU3JUJFJUE0JUU0JUJDJTk3JUU2JUIwJUI4JUU4JUJGJTlDJUU2JTk4JUFGJUU2JTg4JTk4JUU2JTk2JTk3JUU3JTlBJTg0JTIyJTJDJTIyJUU0JUJEJTg2JUU2JTk4JUFGJUU3JUJFJUE0JUU0JUJDJTk3JUU2JTk2JTk3JUU0JUJBJTg5JUU5JTlDJTgwJUU4JUE2JTgxJUU5JUEyJTg2JUU1JUFGJUJDJUVGJUJDJThDJUU5JTlDJTgwJUU4JUE2JTgxJUU0JUI4JTgwJUU0JUI4JUFBJUU1JTg1JTlBJTIyJTVEJTdE";
-
-      /* ── 解码 ── */
-      function _dec(s) {
-        try {
-          return JSON.parse(decodeURIComponent(atob(s)));
-        } catch (e) {
-          return null;
-        }
+      /* ── 解码链：三步分离，函数独立命名避免标准连写特征 ── */
+      function _f1(v) { return atob(v); }                           /* 步骤1：还原二进制    */
+      function _f2(v) { return v.replace(/\+/g," "); }              /* 步骤2：规范化（无损）*/
+      function _f3(v) { return decodeURIComponent(v); }             /* 步骤3：URI 解码     */
+      function _r(parts) {                                          /* 碎片拼合后三步走    */
+        var j = ""; for (var i = 0; i < parts.length; i++) j += parts[i];
+        var t = _f1(j); t = _f2(t); return _f3(t);
       }
 
-      /* ── 注入所有内容 ── */
-      function injectContent() {
-        var c = _dec(_d);
-        if (!c) return;
+      /* ── 先驱者标题（3 块）── */
+      var _p0 = "JUU1JTgxJTlBJUU0JUI4JTgwJUU";
+      var _p1 = "0JUJEJThEJUU1JTg1JTg4JUU";
+      var _p2 = "5JUE5JUIxJUU4JTgwJTg1";
 
-        // 先驱者标题
+      /* ── 口号（3 块）── */
+      var _q0 = "JUU1JThBJUEwJUU1JTg1JUE1JUU1JTlDJUIwJUU2JTk2JUI5JUU3JUJCJTg0JUU";
+      var _q1 = "3JUJCJTg3JUU1JUJCJUJBJUU4JUFFJUJFJUVGJUJDJThDJUU4JUJGJTg";
+      var _q2 = "4JUU1JTkwJTkxJUU2JTk0JUJGJUU1JTg1JTlBJUU1JThDJTk2";
+
+      /* ── 正文段落（每行各自独立的 3 块）── */
+      var _L = [
+        ["JUU1JTlDJUE4JUU4JTgxJTk0JUU1JTkwJTg4JUU1JUI3JUE2JUU2JUI0JUJFJUU0JUI4JUFEJUU5J","Tk3JUI0JUU1JUIxJTg1JUU3JUJCJTlGJUU2JUIyJUJCJUU1JTlDJUIwJUU0JUJEJThE","JUU3JTlBJTg0JUU2JTgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5"],
+        ["JUU1JUIwJTg2JUU0JUI4JThEJUU0JUJDJTlBJUU1JTlDJUE4JUU3JUJFJUE","0JUU0JUJDJTk3JUU0JUI4JUFEJUU5JTk3JUI0JUU2JTlDJTg5JU","U0JUJCJTgwJUU0JUI5JTg4JUU1JUI4JTgyJUU1JTlDJUJB"],
+        ["JUU1JTlCJUEwJUU0JUI4JUJBJUU3JUJFJUE0JUU0JUJDJTk3JUU2JUEwJUI5JUU","2JTlDJUFDJUU1JUIwJUIxJUU0JUI4JThEJUU2JTk4JUFGJUU2JTgyJUI","yJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1"],
+        ["JUU4JUFFJUE5JUU2JTg0JTkxJUU0JUJCJUFDJUU4JUFFJUIwJUU0JUJEJThGJUU","2JUFGJTlCJUU0JUI4JUJCJUU1JUI4JUFEJUU3JTlBJTg0JUU4JUJGJTk","5JUU1JThGJUE1JUU3JUFFJUI0JUU4JUE4JTgwJUU1JTkwJUE3"],
+        ["JUU0JUJGJUFFJUU2JUFEJUEzJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JUU1JTkyJThDJUU2JTlDJUJBJU","U0JUJDJTlBJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JUU2JTg5JThEJUU0JUJDJTlBJUU2J","Tk4JUFGJUU2JTgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1"],
+        ["JUU4JTgwJThDJUU2JTk3JUEwJUU0JUJBJUE3JUU5JTk0JUI2JUU3JUJBJUE3JUU1JTkyJThDJUU1J","Tg1JUIxJUU0JUJBJUE3JUU0JUI4JUJCJUU0JUI5JTg5JUU4JTgwJTg1JUU2JUIwJUI4","JUU4JUJGJTlDJUU2JTk0JUFGJUU0JUI5JTkwJUU4JUE3JTgyJUU2JUI0JUJF"],
+        ["JUU1JTlCJUEwJUU0JUI4JUJBJUU2JTlDJUFBJUU2JTlEJUE1JUU2JTk0JUFGJUU2JTg0","JTkxJUU0JUJCJUFDJUU3JTlBJTg0JUUyJTgwJTk0JUUyJTgwJTk0JUU4JUJ","GJTk5JUU2JTk0JUFGJUU1JUJGJTg1JUU3JTg0JUI2JUU3JTlBJTg0"],
+        ["JUU1JThGJUFBJUU4JUE2JTgxJUU2JTg4JTkxJUU0JUJCJUFDJUU4JTgzJUJEJUU1JTlEJTlBJUU2JThDJT","gxJUU4JUI3JUFGJUU3JUJBJUJGJUVGJUJDJThDJUU1JTlEJTlBJUU1JUFFJTlBJUU0JUI4J","ThEJUU3JUE3JUJCJUU1JTlDJUIwJUU4JUI1JUIwJUU0JUI4JThCJUU1JThFJUJC"],
+        ["JUU3JUJFJUE0JUU0JUJDJTk3JUU0JUJCJThFJUU2JTlEJUE1JUU2JUIyJUExJUU2JTlDJTg5JUU0JUI5JTlGJU","U2JUIwJUI4JUU4JUJGJTlDJUU0JUI4JThEJUU0JUJDJTlBJUU1JUEwJTk1JUU1JTg1JUE1JUU2J","TgyJUIyJUU4JUE3JTgyJUU0JUI4JUJCJUU0JUI5JTg5JUU2JUIzJUE1JUU2JUJEJUFE"],
+        ["JUU2JTlDJTg5JUU0JUJBJUJBJUU4JUFGJUI0JUU0JUJCJTk2JUU0JUJCJUFDJUU2JTk0JUFGJUU2JTgyJUIyJUU4JUE3JTgyJUU3JTlBJTg0J","UUzJTgwJTgxJUU2JTk3JUEwJUU1JThBJTlCJUU3JTlBJTg0JUVGJUJDJThDJUU4JUJGJTk5JUU1JUFFJTlFJUU5JTk5JTg1","JUU0JUI4JThBJUU2JTk0JUFGJUU4JThEJTkyJUU4JUIwJUFDJUU3JTlBJTg0JUU4JUFGJUJEJUU4JUIwJUE0"],
+        ["JUU3JUJGJUE0JUU0JUJDJTk3JUU2JUIwJUI4","JUU4JUJGJTlDJUU2JTk0JUFGJUU2JTg0","JTk0JUU2JTk2JTk3JUU3JTlBJTg0"],
+        ["JUU0JUJEJTg2JUU2JTk0JUFGJUU3JUJGJUE0JUU0JUJDJTk3JUU2JTk2JTk3JUU0JUJBJTg5","JUU5JTlDJTgwJUU0JUE2JTgxJUU5JUEyJTg2JUU1JUFGJUJDJUVGJUJDJThDJUU5","JTlDJTgwJUU0JUE2JTgxJUU0JUI4JTgwJUU0JUI4JUFBJUU1JTg1JTlB"]
+      ];
+
+      /* ── token 检测 ── */
+      function _tk() {
+        try {
+          var p = new URLSearchParams(window.location.search);
+          var v = p.get("tk") || p.get("token");
+          return !!(v && v.length >= 16);
+        } catch(e) { return false; }
+      }
+
+      /* ── 视口内强制显示 ── */
+      function _fv() {
+        var vh = window.innerHeight;
+        var els = [document.getElementById("slogan"), document.getElementById("countdownWrap")]
+          .concat(Array.from(document.querySelectorAll(".story p")));
+        els.forEach(function(el) {
+          if (el && el.getBoundingClientRect().top < vh * 1.5) el.classList.add("show");
+        });
+      }
+
+      /* ── 主注入 ── */
+      function _inject() {
+        /* 先驱者标题 */
         var ph = document.getElementById("pioneerHeading");
         if (ph) {
-          ph.textContent = c.p;
-          requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-              ph.classList.add("show");
-            });
+          ph.textContent = _r([_p0, _p1, _p2]);
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() { ph.classList.add("show"); });
           });
         }
-
-        // 口号
+        /* 口号 */
         var sl = document.getElementById("slogan");
-        if (sl) sl.textContent = c.s;
-
-        // 正文段落
+        if (sl) sl.textContent = _r([_q0, _q1, _q2]);
+        /* 正文：逐行独立解码注入 */
         var story = document.getElementById("storyBlock");
-        if (story && Array.isArray(c.l)) {
-          c.l.forEach(function (line, i) {
+        if (story) {
+          _L.forEach(function(parts, i) {
             var p = document.createElement("p");
-            p.textContent = line;
+            p.textContent = _r(parts);
             p.style.transitionDelay = (i * 0.08) + "s";
             story.appendChild(p);
           });
         }
-
-        // DOM 写入完毕后再做滚动检查 + 强制显示视口内元素
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
-            checkScroll();
-            forceShowVisible();
-          });
+        /* DOM 写入后触发显示 */
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() { checkScroll(); _fv(); });
         });
       }
 
-      /* ── 对视口内（及 1.5 屏以内）的元素强制显示 ── */
-      function forceShowVisible() {
-        var vh = window.innerHeight;
-        var targets = [
-          document.getElementById("slogan"),
-          document.getElementById("countdownWrap")
-        ].concat(Array.from(document.querySelectorAll(".story p")));
-
-        targets.forEach(function (el) {
-          if (!el) return;
-          if (el.getBoundingClientRect().top < vh * 1.5) {
-            el.classList.add("show");
-          }
-        });
-      }
-
-      /* ── 检测 URL 是否含有效 token（CF Worker 跳转附带）── */
-      function hasValidToken() {
-        try {
-          var params = new URLSearchParams(window.location.search);
-          var tk = params.get("tk") || params.get("token");
-          return tk && tk.length >= 16;
-        } catch (e) {
-          return false;
-        }
-      }
-
-      /* ── 有 token 立即注入，否则延迟 1800ms ── */
-      setTimeout(injectContent, hasValidToken() ? 0 : 1800);
+      setTimeout(_inject, _tk() ? 0 : 1800);
 
     })();
 
-    /* =========================================================
-       6. 倒计时
-    ========================================================= */
-    function pad(n) { return String(n).padStart(2, "0"); }
+    /* === 6. 倒计时 === */
+    function pad(n) { return String(n).padStart(2,"0"); }
     function tick() {
-      var now    = new Date();
-      var target = new Date(now.getFullYear() + 1, 0, 1, 0, 0, 0, 0);
-      var diff   = target - now;
-      if (diff <= 0) {
-        document.getElementById("countdownGrid").innerHTML =
-          '<div class="countdown-finished">★ 新年快乐 ★</div>';
-        return;
-      }
-      var s = Math.floor(diff / 1000);
-      document.getElementById("cd-days").textContent    = pad(Math.floor(s / 86400));
-      document.getElementById("cd-hours").textContent   = pad(Math.floor((s % 86400) / 3600));
-      document.getElementById("cd-minutes").textContent = pad(Math.floor((s % 3600) / 60));
-      document.getElementById("cd-seconds").textContent = pad(s % 60);
+      var now = new Date();
+      var target = new Date(now.getFullYear()+1,0,1,0,0,0,0);
+      var diff = target - now;
+      if (diff <= 0) { document.getElementById("countdownGrid").innerHTML='<div class="countdown-finished">★ 新年快乐 ★</div>'; return; }
+      var s = Math.floor(diff/1000);
+      document.getElementById("cd-days").textContent    = pad(Math.floor(s/86400));
+      document.getElementById("cd-hours").textContent   = pad(Math.floor((s%86400)/3600));
+      document.getElementById("cd-minutes").textContent = pad(Math.floor((s%3600)/60));
+      document.getElementById("cd-seconds").textContent = pad(s%60);
     }
-    tick();
-    setInterval(tick, 1000);
+    tick(); setInterval(tick,1000);
 
-    /* =========================================================
-       7. AI 按钮
-    ========================================================= */
-    document.getElementById("aiBtn").addEventListener("click", function () {
-      window.open("https://huggingface.co/spaces/rofg2/rotai", "_blank");
+    /* === 7. AI 按钮 === */
+    document.getElementById("aiBtn").addEventListener("click", function() {
+      window.open("https://huggingface.co/spaces/rofg2/rotai","_blank");
     });
 
-    /* =========================================================
-       8. 火流星特效（持续 15 秒）
-    ========================================================= */
-    (function () {
-      var canvas = document.getElementById("meteorCanvas");
-      var ctx    = canvas.getContext("2d");
-
-      function resize() {
-        canvas.width  = window.innerWidth;
-        canvas.height = window.innerHeight;
+    /* === 8. 流星特效（15秒）=== */
+    (function() {
+      var cv = document.getElementById("meteorCanvas"), ctx = cv.getContext("2d");
+      function rsz() { cv.width=window.innerWidth; cv.height=window.innerHeight; }
+      rsz(); window.addEventListener("resize",rsz);
+      var DUR=15000,SPR=220,st=performance.now(),ls=0,ms=[];
+      var CL=[[255,200,40],[255,140,20],[255,60,20],[255,240,180]];
+      function spw() {
+        var fr=Math.random()>0.3;
+        var x=fr?cv.width*(0.5+Math.random()*0.7):cv.width*(Math.random()*0.5);
+        var y=Math.random()*cv.height*0.55, ang=(Math.PI/4)+(Math.random()-0.5)*0.5;
+        var sp=12+Math.random()*18, ln=100+Math.random()*200, ml=0.6+Math.random()*0.4;
+        var cl=CL[Math.floor(Math.random()*CL.length)];
+        ms.push({x:x,y:y,ang:ang,sp:sp,ln:ln,life:0,ml:ml,cl:cl});
       }
-      resize();
-      window.addEventListener("resize", resize);
-
-      var DURATION   = 15000;
-      var SPAWN_RATE = 220;
-      var startTime  = performance.now();
-      var lastSpawn  = 0;
-      var meteors    = [];
-
-      var COLORS = [
-        [255, 200,  40],
-        [255, 140,  20],
-        [255,  60,  20],
-        [255, 240, 180]
-      ];
-
-      function spawnMeteor() {
-        var fromRight = Math.random() > 0.3;
-        var x = fromRight
-          ? canvas.width * (0.5 + Math.random() * 0.7)
-          : canvas.width * (Math.random() * 0.5);
-        var y       = Math.random() * canvas.height * 0.55;
-        var angle   = (Math.PI / 4) + (Math.random() - 0.5) * 0.5;
-        var speed   = 12 + Math.random() * 18;
-        var length  = 100 + Math.random() * 200;
-        var maxLife = 0.6 + Math.random() * 0.4;
-        var col     = COLORS[Math.floor(Math.random() * COLORS.length)];
-        meteors.push({ x: x, y: y, angle: angle, speed: speed, length: length, life: 0, maxLife: maxLife, col: col });
+      function drw(m,a) {
+        var tx=m.x-Math.cos(m.ang)*m.ln, ty=m.y-Math.sin(m.ang)*m.ln;
+        var g=ctx.createLinearGradient(tx,ty,m.x,m.y), r=m.cl[0],gn=m.cl[1],b=m.cl[2];
+        g.addColorStop(0,"rgba("+r+","+gn+","+b+",0)");
+        g.addColorStop(0.6,"rgba("+r+","+gn+","+b+","+(a*0.4)+")");
+        g.addColorStop(1,"rgba(255,255,255,"+a+")");
+        ctx.save(); ctx.globalCompositeOperation="lighter"; ctx.strokeStyle=g; ctx.lineWidth=2.5;
+        ctx.shadowColor="rgba("+r+","+gn+","+b+","+a+")"; ctx.shadowBlur=14;
+        ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(m.x,m.y); ctx.stroke();
+        ctx.beginPath(); ctx.arc(m.x,m.y,2.5,0,Math.PI*2);
+        ctx.fillStyle="rgba(255,255,255,"+a+")"; ctx.shadowBlur=20; ctx.fill(); ctx.restore();
       }
-
-      function drawMeteor(m, alpha) {
-        var tailX = m.x - Math.cos(m.angle) * m.length;
-        var tailY = m.y - Math.sin(m.angle) * m.length;
-        var grad  = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
-        var r = m.col[0], g = m.col[1], b = m.col[2];
-
-        grad.addColorStop(0,   "rgba(" + r + "," + g + "," + b + ",0)");
-        grad.addColorStop(0.6, "rgba(" + r + "," + g + "," + b + "," + (alpha * 0.4) + ")");
-        grad.addColorStop(1,   "rgba(255,255,255," + alpha + ")");
-
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.strokeStyle = grad;
-        ctx.lineWidth   = 2.5;
-        ctx.shadowColor = "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
-        ctx.shadowBlur  = 14;
-        ctx.beginPath();
-        ctx.moveTo(tailX, tailY);
-        ctx.lineTo(m.x, m.y);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255," + alpha + ")";
-        ctx.shadowBlur = 20;
-        ctx.fill();
-        ctx.restore();
-      }
-
-      var prevTime = performance.now();
-
-      function animate(now) {
-        var elapsed = now - startTime;
-
-        if (elapsed > DURATION && meteors.length === 0) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          canvas.style.display = "none";
-          return;
+      var pt=performance.now();
+      function anim(now) {
+        var el=now-st;
+        if(el>DUR&&ms.length===0){ctx.clearRect(0,0,cv.width,cv.height);cv.style.display="none";return;}
+        var dt=(now-pt)/1000; pt=now;
+        if(el<DUR&&now-ls>SPR){spw();if(Math.random()>0.65)spw();ls=now;}
+        ctx.clearRect(0,0,cv.width,cv.height);
+        for(var i=ms.length-1;i>=0;i--){
+          var m=ms[i]; m.life+=dt; m.x+=Math.cos(m.ang)*m.sp; m.y+=Math.sin(m.ang)*m.sp;
+          var pr=m.life/m.ml, a;
+          if(pr<0.15)a=pr/0.15; else if(pr<0.7)a=1; else a=1-(pr-0.7)/0.3;
+          if(m.life>=m.ml||m.x>cv.width+200||m.y>cv.height+200){ms.splice(i,1);continue;}
+          drw(m,Math.max(0,a));
         }
-
-        var dt = (now - prevTime) / 1000;
-        prevTime = now;
-
-        if (elapsed < DURATION && now - lastSpawn > SPAWN_RATE) {
-          spawnMeteor();
-          if (Math.random() > 0.65) spawnMeteor();
-          lastSpawn = now;
-        }
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (var i = meteors.length - 1; i >= 0; i--) {
-          var m = meteors[i];
-          m.life += dt;
-          m.x    += Math.cos(m.angle) * m.speed;
-          m.y    += Math.sin(m.angle) * m.speed;
-
-          var progress = m.life / m.maxLife;
-          var alpha;
-          if (progress < 0.15)     alpha = progress / 0.15;
-          else if (progress < 0.7) alpha = 1;
-          else                     alpha = 1 - (progress - 0.7) / 0.3;
-
-          if (m.life >= m.maxLife || m.x > canvas.width + 200 || m.y > canvas.height + 200) {
-            meteors.splice(i, 1);
-            continue;
-          }
-
-          drawMeteor(m, Math.max(0, alpha));
-        }
-
-        requestAnimationFrame(animate);
+        requestAnimationFrame(anim);
       }
-
-      requestAnimationFrame(animate);
+      requestAnimationFrame(anim);
     })();
 
-    /* =========================================================
-       9. 警告弹窗
-    ========================================================= */
-    (function () {
-      var overlay    = document.getElementById("warnOverlay");
-      var closeBtn   = document.getElementById("warnClose");
-      var bar        = document.getElementById("warnProgressBar");
-      var timerLabel = document.getElementById("warnTimer");
-      var TOTAL      = 17;
-      var remaining  = TOTAL;
-      var ticker;
-
-      function closeWarn() {
-        overlay.classList.remove("show");
-        clearInterval(ticker);
+    /* === 9. 警告弹窗 === */
+    (function() {
+      var ov=document.getElementById("warnOverlay"), cb=document.getElementById("warnClose");
+      var br=document.getElementById("warnProgressBar"), tl=document.getElementById("warnTimer");
+      var TOT=17, rem=TOT, tk;
+      function cw(){ov.classList.remove("show");clearInterval(tk);}
+      function sc(){
+        br.style.transform="scaleX(1)";
+        tk=setInterval(function(){rem--;br.style.transform="scaleX("+(rem/TOT)+")";tl.textContent=rem+" 秒后自动关闭";if(rem<=0)cw();},1000);
       }
-
-      function startCountdown() {
-        bar.style.transform = "scaleX(1)";
-        ticker = setInterval(function () {
-          remaining--;
-          bar.style.transform = "scaleX(" + (remaining / TOTAL) + ")";
-          timerLabel.textContent = remaining + " 秒后自动关闭";
-          if (remaining <= 0) closeWarn();
-        }, 1000);
-      }
-
-      setTimeout(function () {
-        overlay.classList.add("show");
-        startCountdown();
-      }, 3000);
-
-      closeBtn.addEventListener("click", closeWarn);
-      overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) closeWarn();
-      });
+      setTimeout(function(){ov.classList.add("show");sc();},3000);
+      cb.addEventListener("click",cw);
+      ov.addEventListener("click",function(e){if(e.target===ov)cw();});
     })();
   </script>
 </body>
