@@ -1,226 +1,174 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-Frame-Options" content="DENY">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta name="referrer" content="no-referrer">
-  <title>二次元导航</title>
+<meta charset="UTF-8">
 
-  <!-- 使用系统中文字体栈，无需外部加载 -->
-  <style>
-    :root {
-      --red: #b30000;
-      --darkred: #7a0000;
-      --gold: #ffd700;
-      --bg: #ffeaea;
-    }
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; frame-ancestors 'none';">
 
-    * {
-      box-sizing: border-box;
-    }
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC",
-                   "WenQuanYi Micro Hei", sans-serif;
-    }
+<title>二次元导航</title>
 
-    /* 背景装饰星 */
-    .bg-star {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 120vw;
-      color: var(--gold);
-      opacity: 0.06;
-      z-index: -1;
-      pointer-events: none;
-      user-select: none;
-    }
+<style>
+:root{
+  --red:#b30000;
+  --darkred:#7a0000;
+  --gold:#ffd700;
+  --bg:#ffeaea;
+}
 
-    /* 主容器 */
-    .container {
-      max-width: 800px;
-      margin: auto;
-      padding: 80px 20px;
-    }
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:'Noto Sans SC',sans-serif;
+}
 
-    /* 标题 */
-    .title {
-      text-align: center;
-      font-size: 32px;
-      color: var(--darkred);
-      margin-bottom: 30px;
-      letter-spacing: 3px;
-    }
+.bg-star{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:120vw;
+  color:var(--gold);
+  opacity:0.06;
+  z-index:-1;
+}
 
-    /* 卡片 */
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 28px 30px;
-      box-shadow: 0 10px 30px rgba(120, 0, 0, 0.15);
-      line-height: 2;
-    }
+.container{
+  max-width:800px;
+  margin:auto;
+  padding:80px 20px;
+}
 
-    /* 卡片内部区块 */
-    .link-block {
-      margin-bottom: 20px;
-    }
+.title{
+  text-align:center;
+  font-size:32px;
+  color:var(--darkred);
+  margin-bottom:30px;
+  letter-spacing:3px;
+}
 
-    .link-block:last-child {
-      margin-bottom: 0;
-    }
+.card{
+  background:white;
+  border-radius:12px;
+  padding:25px;
+  box-shadow:0 10px 30px rgba(120,0,0,0.15);
+  line-height:1.8;
+  word-break:break-all;
+}
 
-    .link-label {
-      font-size: 13px;
-      color: #999;
-      margin-bottom: 4px;
-      letter-spacing: 1px;
-    }
+.link-block{
+  margin-bottom:20px;
+}
 
-    .link-url {
-      font-size: 13px;
-      color: var(--darkred);
-      word-break: break-all;
-      background: #fff5f5;
-      border-left: 3px solid var(--red);
-      padding: 8px 12px;
-      border-radius: 0 6px 6px 0;
-    }
+.label{
+  color:var(--darkred);
+  font-weight:bold;
+}
 
-    .key-row {
-      margin: 6px 0 20px;
-      font-size: 14px;
-      color: #333;
-    }
+.copy-btn{
+  display:block;
+  margin:15px auto 0;
+  padding:12px 30px;
+  background:linear-gradient(135deg,var(--red),var(--darkred));
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:14px;
+  letter-spacing:2px;
+  transition:.2s;
+}
 
-    .key-row span {
-      font-weight: bold;
-      color: var(--darkred);
-      background: #fff0f0;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-family: monospace;
-      letter-spacing: 1px;
-    }
+.copy-btn:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.1);
+}
 
-    /* 分割线 */
-    .divider {
-      border: none;
-      border-top: 1px dashed #f0c0c0;
-      margin: 20px 0;
-    }
+.toast{
+  position:fixed;
+  bottom:40px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.8);
+  color:#fff;
+  padding:10px 20px;
+  border-radius:6px;
+  font-size:13px;
+  opacity:0;
+  transition:.3s;
+}
 
-    /* 按钮 */
-    .copy-btn {
-      display: block;
-      margin: 25px auto 0;
-      padding: 12px 30px;
-      background: linear-gradient(135deg, var(--red), var(--darkred));
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      letter-spacing: 2px;
-      transition: 0.2s;
-    }
-
-    .copy-btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.1);
-    }
-
-    .copy-btn:active {
-      transform: translateY(0);
-    }
-
-    /* 提示 */
-    .toast {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-size: 13px;
-      opacity: 0;
-      transition: 0.3s;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-
-    .toast.show {
-      opacity: 1;
-    }
-  </style>
+.toast.show{
+  opacity:1;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="bg-star">★</div>
+<div class="bg-star">★</div>
 
-  <div class="container">
-    <div class="title">二次元导航站点</div>
+<div class="container">
+  <div class="title">二次元导航站点</div>
 
-    <div class="card">
+  <div class="card">
 
-      <div class="link-block">
-        <div class="link-label">🔗 主链接（Safari / Chrome / Edge 打开）</div>
-        <div class="link-url" id="url-main">
-          https://cryptostorm.is/paste/?7e521b6b3fe82486#9rZWBfH7jmgDrCzoQdX87Fx2wDaRXqseg4mNrzC5nmqJ
-        </div>
+    <div class="link-block">
+      <div class="label">主链接：</div>
+      <div id="mainLink">
+        https://cryptostorm.is/paste/?7e521b6b3fe82486#9rZWBfH7jmgDrCzoQdX87Fx2wDaRXqseg4mNrzC5nmqJ
       </div>
-
-      <div class="key-row">
-        🔑 访问密码：<span>hyw203096#H</span>
-      </div>
-
-      <hr class="divider">
-
-      <div class="link-block">
-        <div class="link-label">🔗 备用链接</div>
-        <div class="link-url" id="url-backup">
-          https://enjoys.rocks/?1b22e482bf703d37#2RvGRmiapLSLy4wAktpMmYUst19JpqDriZLjNah4pGnL
-        </div>
-      </div>
-
+      <button class="copy-btn" onclick="copyText('mainLink')">复制主链接</button>
     </div>
 
-    <button class="copy-btn" onclick="copyAll()">一键复制全部内容</button>
+    <div class="link-block">
+      <div class="label">备用链接：</div>
+      <div id="backupLink">
+        https://enjoys.rocks/?1b22e482bf703d37#2RvGRmiapLSLy4wAktpMmYUst19JpqDriZLjNah4pGnL
+      </div>
+      <button class="copy-btn" onclick="copyText('backupLink')">复制备用链接</button>
+    </div>
+
+    <div class="link-block">
+      <div class="label">访问提示：</div>
+      请复制后使用 Safari / Chrome / Edge 浏览器打开
+      <br><br>
+      🔑：hyw203096#H备用网址
+    </div>
+
   </div>
+</div>
 
-  <div class="toast" id="toast">已复制 ✔</div>
+<div class="toast" id="toast">已复制 ✔</div>
 
-  <script>
-    // 统一使用现代 Clipboard API，移除已废弃的 execCommand
-    async function copyAll() {
-      const main   = document.getElementById('url-main').innerText.trim();
-      const backup = document.getElementById('url-backup').innerText.trim();
-      const text   = `主链接：${main}\n\n访问密码：hyw203096#H\n\n备用链接：${backup}`;
+<script>
+function copyText(id){
+  const text = document.getElementById(id).innerText.trim();
 
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast('已复制 ✔');
-      } catch {
-        showToast('复制失败，请手动选取');
-      }
-    }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(showToast);
+  }else{
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+    showToast();
+  }
+}
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 1800);
-    }
-  </script>
+function showToast(){
+  const t = document.getElementById("toast");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1500);
+}
+</script>
 
 </body>
 </html>
