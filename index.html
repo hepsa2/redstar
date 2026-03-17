@@ -653,20 +653,7 @@ function forceShowAll() {
   });
 }
 
-        // 口号
-        const sl = document.getElementById("slogan");
-        if (sl) sl.textContent = c.s;
-
-        // 正文段落
-        const story = document.getElementById("storyBlock");
-        if (story && Array.isArray(c.l)) {
-          c.l.forEach((line, i) => {
-            const p = document.createElement("p");
-            p.textContent = line;
-            p.style.transitionDelay = (i * 0.08) + "s";
-            story.appendChild(p);
-          });
-        }
+       
 
         // 注入后触发一次滚动检查
         checkScroll();
