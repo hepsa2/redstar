@@ -377,6 +377,10 @@
       cb.addEventListener("click",cw);
       ov.addEventListener("click",function(e){if(e.target===ov)cw();});
     })();
+  
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
   </script>
 </body>
 </html>
