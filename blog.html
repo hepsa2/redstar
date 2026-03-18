@@ -143,6 +143,7 @@ async function loadPosts(key) {
 
 /* ── 展开/收起栏目 ── */
 function toggle(id) {
+    if (event.target.tagName === "A") return;
     const el = document.getElementById("list-" + id);
     el.style.display = el.style.display === "block" ? "none" : "block";
 }
