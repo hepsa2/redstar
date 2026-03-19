@@ -1,12 +1,10 @@
 // 缓存版本（每次更新记得改这里）
-const CACHE_NAME = 'app-cache-v7';
+const CACHE_NAME = 'app-cache-v8';
 
 // 需要预缓存的页面
 const URLS_TO_CACHE = [
   '/',
-  'aa.png',
-  '/blog.html',
-  '/txt.html',
+  
   '/index.html'
 ];
 
