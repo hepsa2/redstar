@@ -648,7 +648,12 @@
           /* 摘要：从 description 提取纯文本,取前 120 字 */
           const descNode = el.querySelector("description");
           let summary = "";
+          let fullContent = "";
           if (descNode) {
+            // 保存完整的HTML内容用于展开显示
+            fullContent = descNode.textContent || "";
+            
+            // 提取纯文本用于摘要
             const plain = (descNode.textContent || "")
               .replace(/<[^>]*>/g, "")
               .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
@@ -657,7 +662,7 @@
             summary = plain.length > 120 ? plain.slice(0, 120) + "…" : plain;
           }
 
-          allArticles.push({ title, link, formattedDate, summary });
+          allArticles.push({ title, link, formattedDate, summary, fullContent });
         });
 
         if (allArticles.length === 0) {
@@ -734,7 +739,7 @@
             cardEl.addEventListener('click', (e) => {
               // 如果点击的是链接，不处理
               if (e.target.closest('.card-link')) return;
-              toggleCard(cardEl, globalIdx, a.link);
+              toggleCard(cardEl, globalIdx, a.link, a.fullContent);
             });
           }
         });
@@ -756,7 +761,7 @@
     /* =========================================================
        6. 卡片展开/收起逻辑
     ========================================================= */
-    function toggleCard(cardEl, index, link) {
+    function toggleCard(cardEl, index, link, fullContent) {
       const isExpanded = cardEl.classList.contains('expanded');
       
       if (isExpanded) {
@@ -773,7 +778,7 @@
         
         // 如果内容未加载，则加载
         if (!articleContents[index]) {
-          loadArticleContent(index, link);
+          loadArticleContent(index, link, fullContent);
         }
         
         // 平滑滚动到卡片顶部
@@ -786,9 +791,18 @@
     /* =========================================================
        7. 加载文章内容
     ========================================================= */
-    function loadArticleContent(index, link) {
+    function loadArticleContent(index, link, fullContent) {
       const contentEl = document.getElementById(`content-${index}`);
       
+      // 优先使用RSS feed中的完整内容
+      if (fullContent && fullContent.trim().length > 0) {
+        // 直接使用RSS中的HTML内容
+        articleContents[index] = fullContent;
+        contentEl.innerHTML = fullContent;
+        return;
+      }
+      
+      // 如果RSS中没有内容，尝试fetch文章页面
       fetch(link)
         .then(response => response.text())
         .then(html => {
@@ -796,32 +810,58 @@
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
           
-          // 尝试提取文章内容（WriteFreely通常在article标签中）
-          let content = doc.querySelector('article');
+          // WriteFreely的文章内容通常在 id="post-body" 的元素中
+          let content = doc.querySelector('#post-body');
           
+          // 如果没找到，尝试其他选择器
           if (!content) {
-            // 如果没有article标签，尝试其他常见的内容容器
-            content = doc.querySelector('.post-content') || 
-                     doc.querySelector('.content') || 
-                     doc.querySelector('main') ||
-                     doc.body;
+            content = doc.querySelector('article .e-content') || 
+                     doc.querySelector('article') ||
+                     doc.querySelector('.post-body') ||
+                     doc.querySelector('.e-content');
           }
           
           if (content) {
-            // 移除标题（因为已在卡片中显示）
-            const h1 = content.querySelector('h1');
-            if (h1) h1.remove();
+            // 克隆内容以避免修改原始DOM
+            const contentClone = content.cloneNode(true);
             
-            // 清理可能的导航元素
-            content.querySelectorAll('nav, header, footer').forEach(el => el.remove());
+            // 移除标题（因为已在卡片中显示）
+            contentClone.querySelectorAll('h1, h2.post-title').forEach(el => el.remove());
+            
+            // 移除可能的导航、页脚等
+            contentClone.querySelectorAll('nav, header, footer, .nav, .header, .footer').forEach(el => el.remove());
+            
+            // 移除script和style标签
+            contentClone.querySelectorAll('script, style').forEach(el => el.remove());
+            
+            // 移除可能的图片（如果是index.html的图片）
+            // 只保留文章正文中的图片
+            const images = contentClone.querySelectorAll('img');
+            images.forEach(img => {
+              // 如果图片src不是相对路径或不在文章域名下，移除
+              const src = img.getAttribute('src') || '';
+              if (src.includes('index.html') || !src.includes('paper.wf')) {
+                img.remove();
+              }
+            });
+            
+            // 获取处理后的HTML
+            let processedHTML = contentClone.innerHTML.trim();
+            
+            // 如果内容太短（可能提取错误），显示错误
+            if (processedHTML.length < 50) {
+              contentEl.innerHTML = '<div class="content-error">★ 无法正确加载文章内容，请点击"阅读全文"查看完整文章 ★</div>';
+              return;
+            }
             
             // 缓存内容
-            articleContents[index] = content.innerHTML;
+            articleContents[index] = processedHTML;
             
             // 显示内容
             contentEl.innerHTML = articleContents[index];
           } else {
-            contentEl.innerHTML = '<div class="content-error">无法加载文章内容</div>';
+            console.error('未找到文章内容容器');
+            contentEl.innerHTML = '<div class="content-error">★ 无法定位文章内容，请点击"阅读全文"查看 ★</div>';
           }
         })
         .catch(error => {
@@ -974,4 +1014,4 @@
     })();
   </script>
 </body>
-      </html>
+</html>
