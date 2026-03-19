@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#000000">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>最新文章 · 赤星</title>
@@ -25,14 +25,12 @@
       min-height: 100vh;
     }
 
-    /* ===== 流星画布 ===== */
     #meteorCanvas {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       pointer-events: none; z-index: 9998;
     }
 
-    /* ===== 淡色红星背景 ===== */
     .flag-bg {
       position: fixed; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -40,7 +38,6 @@
       z-index: -1; pointer-events: none; user-select: none; line-height: 1;
     }
 
-    /* ===== 汉堡按钮 ===== */
     .menu-btn {
       position: fixed; top: 25px; right: 25px;
       width: 55px; height: 55px; background: var(--red); border-radius: 10px;
@@ -58,7 +55,6 @@
       top: -12px; right: -12px; font-size: 20px;
     }
 
-    /* ===== 侧边栏 ===== */
     .sidebar {
       position: fixed; top: 0; right: 0; width: 350px; height: 100vh;
       background: rgba(255,220,220,0.96); padding: 100px 40px;
@@ -73,14 +69,12 @@
     }
     .sidebar a:hover { background: #ffcccc; }
 
-    /* ===== 主容器 ===== */
     .container {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 80px 24px 100px;
+      padding: 80px 24px 160px;
     }
 
-    /* ===== 页头 ===== */
     .page-header {
       text-align: center;
       margin-bottom: 60px;
@@ -126,7 +120,6 @@
     .divider::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #b30000aa, transparent); }
     .divider-star { color: var(--gold); font-size: 18px; }
 
-    /* ===== 统计条 ===== */
     .stats-bar {
       display: flex;
       align-items: center;
@@ -146,7 +139,6 @@
     .stats-bar .total { font-weight: 700; color: var(--red); }
     .stats-bar .page-info { opacity: 0.7; }
 
-    /* ===== 博客卡片网格 ===== */
     #blog-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -156,7 +148,7 @@
     }
     #blog-cards.fading { opacity: 0; }
 
-    .loading-msg {
+    .loading-msg, .error-msg {
       grid-column: 1 / -1;
       text-align: center;
       color: var(--darkred);
@@ -165,47 +157,32 @@
       padding: 60px 0;
       opacity: 0.7;
     }
+    .error-msg { color: #8b0000; opacity: 0.6; }
     .loading-spinner { display: inline-block; animation: spin 1.2s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .error-msg {
-      grid-column: 1 / -1;
-      text-align: center;
-      color: #8b0000;
-      font-size: 14px;
-      letter-spacing: 0.15em;
-      padding: 40px 0;
-      opacity: 0.6;
-    }
-
-    /* ===== 单张博客卡片 ===== */
     .blog-card {
       background: rgba(255,255,255,0.82);
       border: 1px solid rgba(179,0,0,0.12);
       border-radius: 14px;
       box-shadow: 0 8px 32px rgba(120,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
-      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease;
-      display: flex;
-      flex-direction: column;
+      transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
       overflow: hidden;
       opacity: 0;
       transform: translateY(28px);
       animation: cardIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
-      cursor: pointer;
     }
     @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
-    .blog-card:hover {
-      transform: translateY(-8px) scale(1.012);
-      box-shadow: 0 20px 52px rgba(120,0,0,0.18), 0 4px 16px rgba(0,0,0,0.10);
-    }
 
-    /* 展开状态 */
     .blog-card.expanded {
       grid-column: 1 / -1;
-      transform: none;
+      transform: none !important;
+      box-shadow: 0 16px 64px rgba(120,0,0,0.22);
     }
-    .blog-card.expanded:hover {
-      transform: translateY(-4px);
+
+    .blog-card:hover:not(.expanded) {
+      transform: translateY(-8px) scale(1.012);
+      box-shadow: 0 20px 52px rgba(120,0,0,0.18), 0 4px 16px rgba(0,0,0,0.10);
     }
 
     .card-top-bar {
@@ -215,7 +192,6 @@
 
     .card-body {
       padding: 22px 24px 20px;
-      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -242,115 +218,51 @@
       font-size: 13px;
       color: #555;
       line-height: 1.8;
-      flex: 1;
       display: -webkit-box;
       -webkit-line-clamp: 4;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
 
-    /* 展开时隐藏摘要 */
-    .blog-card.expanded .card-summary {
-      display: none;
-    }
-
-    /* ===== 博客内容区域 ===== */
     .card-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 0 24px;
+      display: none;
+      padding: 0 24px 24px;
+      font-size: 15px;
+      line-height: 1.78;
+      color: #222;
     }
-
-    .blog-card.expanded .card-content {
-      max-height: 5000px;
-      padding: 0 24px 20px;
+    .card-content.show {
+      display: block;
     }
-
-    .content-inner {
-      padding: 20px 0;
-      border-top: 1px solid rgba(179,0,0,0.15);
-      font-size: 14px;
-      line-height: 1.9;
-      color: #333;
-    }
-
-    .content-inner h1, .content-inner h2, .content-inner h3 {
+    .card-content :is(h1,h2,h3,h4,h5,h6) {
       color: var(--darkred);
-      margin: 24px 0 12px;
-      font-weight: 700;
+      margin: 1.4em 0 0.6em;
     }
-
-    .content-inner h1 { font-size: 22px; }
-    .content-inner h2 { font-size: 19px; }
-    .content-inner h3 { font-size: 16px; }
-
-    .content-inner p {
-      margin: 12px 0;
-    }
-
-    .content-inner ul, .content-inner ol {
-      margin: 12px 0;
-      padding-left: 24px;
-    }
-
-    .content-inner li {
-      margin: 6px 0;
-    }
-
-    .content-inner code {
-      background: rgba(179,0,0,0.08);
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-    }
-
-    .content-inner pre {
-      background: rgba(0,0,0,0.05);
-      padding: 16px;
-      border-radius: 6px;
-      overflow-x: auto;
-      margin: 16px 0;
-    }
-
-    .content-inner pre code {
-      background: none;
-      padding: 0;
-    }
-
-    .content-inner blockquote {
-      border-left: 3px solid var(--red);
-      padding-left: 16px;
-      margin: 16px 0;
-      color: #666;
-      font-style: italic;
-    }
-
-    .content-inner img {
+    .card-content p { margin: 1.1em 0; }
+    .card-content img {
       max-width: 100%;
       height: auto;
       border-radius: 8px;
-      margin: 16px 0;
+      margin: 1.2em auto;
+      display: block;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .card-content pre {
+      background: #f8f0f0;
+      padding: 14px 18px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13.5px;
     }
 
-    .content-loading {
-      text-align: center;
-      padding: 40px 0;
-      color: var(--darkred);
-      font-size: 14px;
+    .card-footer {
+      padding: 0 24px 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
-    .content-error {
-      text-align: center;
-      padding: 40px 0;
-      color: #8b0000;
-      font-size: 14px;
-    }
-
-    .card-footer { padding: 0 24px 20px; }
-
-    .card-link {
+    .card-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -362,43 +274,19 @@
       font-size: 13px;
       font-weight: 500;
       letter-spacing: 0.08em;
-      transition: filter 0.2s, transform 0.2s;
-      box-shadow: 0 3px 12px rgba(120,0,0,0.3);
-    }
-    .card-link::after { content: "→"; font-size: 14px; }
-    .card-link:hover  { filter: brightness(1.15); transform: translateX(3px); }
-
-    /* 展开指示器 */
-    .expand-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--red);
-      margin-left: auto;
-      padding: 6px 12px;
-      border: 1px solid var(--red);
-      border-radius: 5px;
-      background: rgba(255,255,255,0.5);
       transition: all 0.2s;
+      box-shadow: 0 3px 12px rgba(120,0,0,0.3);
+      cursor: pointer;
+      border: none;
     }
+    .card-btn:hover { filter: brightness(1.15); transform: translateX(3px); }
+    .card-btn::after { content: "→"; font-size: 14px; }
 
-    .expand-indicator::after {
-      content: "▼";
-      font-size: 10px;
-      transition: transform 0.3s;
+    .card-btn.close {
+      background: linear-gradient(135deg, #555 0%, #333 100%);
     }
+    .card-btn.close::after { content: "↑"; }
 
-    .blog-card.expanded .expand-indicator::after {
-      transform: rotate(180deg);
-    }
-
-    .blog-card.expanded .expand-indicator {
-      background: var(--red);
-      color: white;
-    }
-
-    /* ===== 分页控件 ===== */
     .pagination {
       display: flex;
       align-items: center;
@@ -424,8 +312,7 @@
       font-size: 13px;
       letter-spacing: 0.1em;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s, transform 0.18s;
-      font-family: 'Noto Sans SC', sans-serif;
+      transition: all 0.2s;
     }
     .pg-btn:hover:not(:disabled) {
       background: var(--red); color: white; transform: translateY(-2px);
@@ -449,8 +336,7 @@
       font-size: 13px;
       font-family: 'Orbitron', monospace;
       cursor: pointer;
-      transition: background 0.18s, color 0.18s, transform 0.18s;
-      user-select: none;
+      transition: all 0.18s;
     }
     .pg-num:hover { background: rgba(179,0,0,0.1); transform: translateY(-2px); }
     .pg-num.active {
@@ -463,9 +349,8 @@
       font-size: 14px; letter-spacing: 2px; padding: 0 4px;
     }
 
-    /* ===== 查看全部 ===== */
     .more-wrap {
-      text-align: center; margin-top: 8px;
+      text-align: center; margin: 32px 0 80px;
       opacity: 0; transform: translateY(20px);
       transition: opacity 0.8s 0.4s, transform 0.8s 0.4s;
     }
@@ -476,14 +361,11 @@
       text-decoration: none; color: var(--red);
       border: 1.5px solid var(--red); padding: 12px 32px;
       border-radius: 8px; font-size: 15px; letter-spacing: 0.15em;
-      transition: background 0.22s, color 0.22s;
+      transition: all 0.22s;
       background: rgba(255,255,255,0.5);
     }
     .more-btn:hover { background: var(--red); color: white; }
-    .more-btn::before { content: "★"; color: var(--gold); font-size: 14px; }
-    .more-btn::after  { content: "★"; color: var(--gold); font-size: 14px; }
 
-    /* ===== AI 悬浮按钮 ===== */
     #aiBtn {
       position: fixed; bottom: 28px; right: 28px;
       width: 62px; height: 62px;
@@ -491,55 +373,23 @@
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(140,0,0,0.45), 0 1px 4px rgba(0,0,0,0.18);
-      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease;
+      box-shadow: 0 4px 20px rgba(140,0,0,0.45);
+      transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
       z-index: 9999;
       animation: aiBtnPulse 3s ease-in-out infinite;
     }
     #aiBtn:hover {
       transform: scale(1.1);
-      box-shadow: 0 8px 32px rgba(180,0,0,0.55), 0 2px 8px rgba(0,0,0,0.22);
+      box-shadow: 0 8px 32px rgba(180,0,0,0.55);
       animation: none;
     }
-    #aiBtn::before {
-      content: ''; position: absolute; inset: -4px;
-      border-radius: 50%; border: 2px solid rgba(200,0,0,0.4);
-      animation: aiRingPulse 3s ease-in-out infinite;
-    }
-    #aiBtn svg {
-      width: 28px; height: 28px; fill: none; stroke: #fff;
-      stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
-      position: relative; z-index: 1;
-    }
-    #aiBtn::after {
-      content: '★'; position: absolute; top: -5px; right: -3px;
-      font-size: 13px; color: var(--gold); line-height: 1;
-      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
-      animation: starSpin 6s linear infinite;
-    }
-    @keyframes aiBtnPulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(140,0,0,0.45), 0 1px 4px rgba(0,0,0,0.18); }
-      50%       { box-shadow: 0 4px 30px rgba(190,0,0,0.65), 0 1px 4px rgba(0,0,0,0.18); }
-    }
-    @keyframes aiRingPulse {
-      0%   { transform: scale(1);    opacity: 0.7; }
-      60%  { transform: scale(1.18); opacity: 0; }
-      100% { transform: scale(1);    opacity: 0; }
-    }
-    @keyframes starSpin {
-      0%   { transform: rotate(0deg)   scale(1); }
-      50%  { transform: rotate(180deg) scale(1.2); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
 
-    /* ===== 响应式 ===== */
     @media (max-width: 768px) {
       .sidebar { width: 100%; }
       .flag-bg  { font-size: 150vw; }
       #blog-cards { grid-template-columns: 1fr; }
       #aiBtn { width: 54px; height: 54px; bottom: 20px; right: 20px; }
-      #aiBtn svg { width: 24px; height: 24px; }
-      .pg-num { width: 32px; height: 32px; font-size: 11px; }
+      .card-content { font-size: 14.5px; }
     }
   </style>
 </head>
@@ -569,23 +419,19 @@
       <div class="divider"><span class="divider-star">★</span></div>
     </header>
 
-    <!-- 统计条 -->
     <div class="stats-bar" id="statsBar">
       <span>共 <span class="total" id="totalCount">—</span> 篇文章</span>
       <span class="page-info" id="pageInfo">第 — 页 / 共 — 页</span>
     </div>
 
-    <!-- 卡片网格 -->
     <div id="blog-cards">
       <div class="loading-msg">
         <span class="loading-spinner">⟳</span> 文章加载中
       </div>
     </div>
 
-    <!-- 分页 -->
     <div class="pagination" id="pagination"></div>
 
-    <!-- 查看全部 -->
     <div class="more-wrap" id="moreWrap">
       <a href="https://paper.wf/meteor" class="more-btn" target="_blank">
         前往博客查看全部
@@ -597,16 +443,14 @@
   <div id="aiBtn" title="打开 AI 对话">
     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 3C7.03 3 3 6.69 3 11.2c0 2.4 1.1 4.57 2.88 6.1L5 21l3.9-1.72A10.1 10.1 0 0012 19.4c4.97 0 9-3.69 9-8.2S16.97 3 12 3z"/>
-      <circle cx="8.5"  cy="11.2" r="1" fill="white" stroke="none"/>
-      <circle cx="12"   cy="11.2" r="1" fill="white" stroke="none"/>
-      <circle cx="15.5" cy="11.2" r="1" fill="white" stroke="none"/>
+      <circle cx="8.5"  cy="11.2" r="1" fill="white"/>
+      <circle cx="12"   cy="11.2" r="1" fill="white"/>
+      <circle cx="15.5" cy="11.2" r="1" fill="white"/>
     </svg>
   </div>
 
   <script>
-    /* =========================================================
-       1. 菜单
-    ========================================================= */
+    // ==================== 菜单 ====================
     const menuBtn = document.getElementById("menuBtn");
     const sidebar = document.getElementById("sidebar");
     menuBtn.onclick = () => {
@@ -614,97 +458,83 @@
       sidebar.classList.toggle("active");
     };
 
-    /* =========================================================
-       2. 页头入场
-    ========================================================= */
+    // ==================== 页头淡入 ====================
     setTimeout(() => {
       document.getElementById("pageHeader").classList.add("show");
     }, 300);
 
-    /* =========================================================
-       3. HTML解码工具函数
-    ========================================================= */
-    function decodeHTML(html) {
-      const txt = document.createElement("textarea");
-      txt.innerHTML = html;
-      return txt.value;
+    // ==================== 分页与数据 ====================
+    const PAGE_SIZE = 6;
+    let allArticles = [];
+    let currentPage = 1;
+
+    // ==================== 缓存工具 ====================
+    const CACHE_PREFIX = "meteor_article_";
+    const CACHE_EXPIRE_HOURS = 24;
+
+    function getCachedContent(link) {
+      const key = CACHE_PREFIX + btoa(link);
+      const data = localStorage.getItem(key);
+      if (!data) return null;
+      try {
+        const obj = JSON.parse(data);
+        if (Date.now() - obj.timestamp > CACHE_EXPIRE_HOURS * 3600 * 1000) {
+          localStorage.removeItem(key);
+          return null;
+        }
+        return obj.content;
+      } catch {
+        localStorage.removeItem(key);
+        return null;
+      }
     }
 
-    /* =========================================================
-       4. 分页状态
-    ========================================================= */
-    const PAGE_SIZE  = 6;   // 每页显示篇数（可按需调整）
-    let   allArticles = []; // 全量文章缓存
-    let   currentPage = 1;
-    const articleContents = {}; // 缓存已加载的文章内容
+    function setCachedContent(link, content) {
+      const key = CACHE_PREFIX + btoa(link);
+      localStorage.setItem(key, JSON.stringify({
+        timestamp: Date.now(),
+        content
+      }));
+    }
 
-    /* =========================================================
-       5. WriteFreely RSS 读取（使用正确的 content:encoded 字段）
-    ========================================================= */
-    fetch("https://paper.wf/meteor/feed/")
-      .then(r => r.text())
-      .then(str => new DOMParser().parseFromString(str, "text/xml"))
-      .then(data => {
-        data.querySelectorAll("item").forEach(el => {
-          const title = el.querySelector("title").textContent;
-          const link  = el.querySelector("link").textContent;
-          const date  = new Date(el.querySelector("pubDate").textContent);
-          const formattedDate =
-            date.getFullYear() + "-" +
-            String(date.getMonth() + 1).padStart(2, "0") + "-" +
-            String(date.getDate()).padStart(2, "0");
+    // ==================== 获取文章正文 ====================
+    async function fetchArticleContent(url) {
+      try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error("网络响应失败");
+        const text = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "text/html");
 
-          // ✅ 关键修复：优先使用 content:encoded，回退到 description
-          const contentNode = el.querySelector("content\\:encoded") || 
-                             el.querySelector("encoded") ||
-                             el.querySelector("description");
-          
-          let summary = "";
-          let fullContent = "";
-          
-          if (contentNode) {
-            // 保存完整的HTML内容（可能是转义的）
-            fullContent = contentNode.textContent || "";
-            
-            // 提取纯文本用于摘要
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = decodeHTML(fullContent);
-            const plain = tempDiv.textContent
-              .replace(/\s+/g, " ")
-              .trim();
-            summary = plain.length > 120 ? plain.slice(0, 120) + "…" : plain;
-          }
+        // 尝试提取正文（WriteFreely 常见结构）
+        let contentEl = doc.querySelector("article") ||
+                        doc.querySelector(".entry-content") ||
+                        doc.querySelector(".content") ||
+                        doc.querySelector("main");
 
-          allArticles.push({ title, link, formattedDate, summary, fullContent });
-        });
-
-        if (allArticles.length === 0) {
-          document.getElementById("blog-cards").innerHTML =
-            '<div class="error-msg">暂无文章</div>';
-          return;
+        if (!contentEl) {
+          contentEl = doc.body;
         }
 
-        document.getElementById("totalCount").textContent = allArticles.length;
-        document.getElementById("statsBar").classList.add("show");
-        renderPage(1);
-      })
-      .catch(() => {
-        document.getElementById("blog-cards").innerHTML =
-          '<div class="error-msg">★ 博客加载失败，请稍后重试 ★</div>';
-      });
+        // 清理不必要的元素
+        const toRemove = contentEl.querySelectorAll("script, style, noscript, iframe, .footer, nav, header, .meta");
+        toRemove.forEach(el => el.remove());
 
-    /* =========================================================
-       6. 渲染指定页
-    ========================================================= */
+        return contentEl.innerHTML.trim() || "<p>无法提取正文内容</p>";
+      } catch (err) {
+        console.error(err);
+        return `<p style="color:#c00">加载失败：${err.message}</p>`;
+      }
+    }
+
+    // ==================== 渲染单页 ====================
     function renderPage(page) {
       const totalPages = Math.ceil(allArticles.length / PAGE_SIZE);
       page = Math.max(1, Math.min(page, totalPages));
       currentPage = page;
 
       const cardsEl = document.getElementById("blog-cards");
-      const moreWr  = document.getElementById("moreWrap");
-
-      /* 淡出 → 更新内容 → 淡入（通过 CSS transition） */
       cardsEl.classList.add("fading");
 
       setTimeout(() => {
@@ -713,237 +543,86 @@
         let html = "";
 
         slice.forEach((a, i) => {
-          const globalIdx = start + i + 1;
-          const delay     = (i * 0.07).toFixed(2) + "s";
-          const cardId    = `card-${globalIdx}`;
+          const idx = start + i + 1;
+          const delay = (i * 0.07).toFixed(2) + "s";
           html += `
-            <div class="blog-card" id="${cardId}" data-index="${globalIdx}" data-link="${a.link}" style="animation-delay:${delay}">
+            <div class="blog-card" data-link="${a.link}" style="animation-delay:${delay}">
               <div class="card-top-bar"></div>
               <div class="card-body">
                 <div class="card-meta">
-                  <span class="card-index">NO.${globalIdx}</span>
+                  <span class="card-index">NO.${idx}</span>
                   <span class="card-date">${a.formattedDate}</span>
-                  <span class="expand-indicator">展开内容</span>
                 </div>
                 <div class="card-title">${a.title}</div>
                 ${a.summary ? `<div class="card-summary">${a.summary}</div>` : ""}
               </div>
-              <div class="card-content">
-                <div class="content-inner" id="content-${globalIdx}">
-                  <div class="content-loading">
-                    <span class="loading-spinner">⟳</span> 加载中...
-                  </div>
-                </div>
-              </div>
               <div class="card-footer">
-                <a class="card-link" href="${a.link}" target="_blank" onclick="event.stopPropagation()">阅读全文</a>
+                <button class="card-btn toggle-btn" data-action="expand">阅读全文</button>
               </div>
+              <div class="card-content" id="content-${idx}"></div>
             </div>`;
         });
 
         cardsEl.innerHTML = html;
         cardsEl.classList.remove("fading");
 
-        // 为每个卡片添加点击事件
-        slice.forEach((a, i) => {
-          const globalIdx = start + i + 1;
-          const cardEl = document.getElementById(`card-${globalIdx}`);
-          if (cardEl) {
-            cardEl.addEventListener('click', (e) => {
-              // 如果点击的是链接，不处理
-              if (e.target.closest('.card-link')) return;
-              toggleCard(cardEl, globalIdx, a.link, a.fullContent);
-            });
-          }
-        });
-
         document.getElementById("pageInfo").textContent =
           `第 ${page} 页 / 共 ${totalPages} 页`;
 
         renderPagination(page, totalPages);
-        moreWr.classList.add("show");
+        document.getElementById("moreWrap").classList.add("show");
 
-        /* 翻页后平滑滚回列表顶部 */
         if (page !== 1) {
-          document.getElementById("statsBar")
-            .scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById("statsBar").scrollIntoView({ behavior: "smooth", block: "start" });
         }
+
+        // 绑定展开/关闭事件
+        document.querySelectorAll(".toggle-btn").forEach(btn => {
+          btn.onclick = async () => {
+            const card = btn.closest(".blog-card");
+            const link = card.dataset.link;
+            const contentEl = card.querySelector(".card-content");
+            const isExpanded = card.classList.contains("expanded");
+
+            if (isExpanded) {
+              // 关闭
+              card.classList.remove("expanded");
+              contentEl.classList.remove("show");
+              btn.textContent = "阅读全文";
+              btn.classList.remove("close");
+              btn.innerHTML = '阅读全文 <span style="font-size:14px">→</span>';
+            } else {
+              // 展开
+              card.classList.add("expanded");
+              btn.disabled = true;
+              btn.innerHTML = '加载中...';
+
+              let html = getCachedContent(link);
+
+              if (!html) {
+                html = await fetchArticleContent(link);
+                if (html && !html.includes("加载失败")) {
+                  setCachedContent(link, html);
+                }
+              }
+
+              contentEl.innerHTML = html;
+              contentEl.classList.add("show");
+              btn.disabled = false;
+              btn.classList.add("close");
+              btn.innerHTML = '收起 ↑';
+
+              // 滚动到卡片顶部
+              card.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          };
+        });
       }, 220);
     }
 
-    /* =========================================================
-       7. 卡片展开/收起逻辑
-    ========================================================= */
-    function toggleCard(cardEl, index, link, fullContent) {
-      const isExpanded = cardEl.classList.contains('expanded');
-      
-      if (isExpanded) {
-        // 收起
-        cardEl.classList.remove('expanded');
-      } else {
-        // 先收起其他已展开的卡片
-        document.querySelectorAll('.blog-card.expanded').forEach(el => {
-          el.classList.remove('expanded');
-        });
-        
-        // 展开当前卡片
-        cardEl.classList.add('expanded');
-        
-        // 如果内容未加载，则加载
-        if (!articleContents[index]) {
-          loadArticleContent(index, link, fullContent);
-        }
-        
-        // 平滑滚动到卡片顶部
-        setTimeout(() => {
-          cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
-    }
-
-    /* =========================================================
-       8. 加载文章内容（核心修复）
-    ========================================================= */
-    function loadArticleContent(index, link, fullContent) {
-      const contentEl = document.getElementById(`content-${index}`);
-      
-      // ✅ 如果有RSS中的内容，先解码再清理
-      if (fullContent && fullContent.trim().length > 0) {
-        // 1. 解码HTML转义字符
-        const decodedHTML = decodeHTML(fullContent);
-        
-        // 2. 创建临时容器来解析和清理HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = decodedHTML;
-        
-        // 3. 尝试定位文章主体
-        let articleBody = 
-          tempDiv.querySelector('#post-body') ||
-          tempDiv.querySelector('article') ||
-          tempDiv.querySelector('.e-content') ||
-          tempDiv.querySelector('.post-content') ||
-          tempDiv;
-        
-        // 4. 移除所有UI控件和装饰元素
-        articleBody.querySelectorAll('script, style, nav, header, footer, aside').forEach(el => el.remove());
-        articleBody.querySelectorAll('canvas, svg').forEach(el => el.remove());
-        
-        // 移除所有按钮和菜单
-        articleBody.querySelectorAll('button').forEach(el => el.remove());
-        articleBody.querySelectorAll('*').forEach(el => {
-          const id = el.id || '';
-          const className = el.className || '';
-          // 移除任何包含按钮、菜单、侧边栏相关的ID或class的元素
-          if (
-            id.toLowerCase().includes('btn') ||
-            id.toLowerCase().includes('menu') ||
-            id.toLowerCase().includes('sidebar') ||
-            id.toLowerCase().includes('nav') ||
-            className.toString().toLowerCase().includes('btn') ||
-            className.toString().toLowerCase().includes('menu') ||
-            className.toString().toLowerCase().includes('sidebar') ||
-            className.toString().toLowerCase().includes('nav') ||
-            className.toString().toLowerCase().includes('flag')
-          ) {
-            el.remove();
-          }
-        });
-        
-        // 5. 移除标题（已在卡片中显示）
-        articleBody.querySelectorAll('h1').forEach(el => el.remove());
-        
-        // 6. 处理图片 - 只保留有效的内容图片
-        articleBody.querySelectorAll('img').forEach(img => {
-          const src = img.getAttribute('src') || '';
-          const alt = img.getAttribute('alt') || '';
-          // 移除装饰性图片、logo、icon等
-          if (
-            !src ||
-            src.includes('logo') ||
-            src.includes('icon') ||
-            src.includes('avatar') ||
-            alt.toLowerCase().includes('logo') ||
-            alt.toLowerCase().includes('icon')
-          ) {
-            img.remove();
-          }
-        });
-        
-        // 7. 移除空元素
-        articleBody.querySelectorAll('div, p, span').forEach(el => {
-          if (!el.textContent.trim() && !el.querySelector('img, video, iframe')) {
-            el.remove();
-          }
-        });
-        
-        // 8. 获取清理后的内容
-        let cleanedHTML = articleBody.innerHTML.trim();
-        
-        // 9. 如果清理后内容太短，尝试fetch文章页面
-        if (cleanedHTML.length < 50) {
-          fetchArticlePage(index, link, contentEl);
-          return;
-        }
-        
-        // 10. 缓存并显示内容
-        articleContents[index] = cleanedHTML;
-        contentEl.innerHTML = cleanedHTML;
-        return;
-      }
-      
-      // 如果RSS中没有内容，fetch文章页面
-      fetchArticlePage(index, link, contentEl);
-    }
-    
-    /* =========================================================
-       9. 从文章页面获取内容（备用方法）
-    ========================================================= */
-    function fetchArticlePage(index, link, contentEl) {
-      fetch(link)
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          // WriteFreely的文章内容
-          let content = 
-            doc.querySelector('#post-body') ||
-            doc.querySelector('article .e-content') ||
-            doc.querySelector('.e-content') ||
-            doc.querySelector('article');
-          
-          if (content) {
-            const contentClone = content.cloneNode(true);
-            
-            // 清理
-            contentClone.querySelectorAll('h1, h2.post-title').forEach(el => el.remove());
-            contentClone.querySelectorAll('nav, header, footer, script, style').forEach(el => el.remove());
-            
-            let processedHTML = contentClone.innerHTML.trim();
-            
-            if (processedHTML.length < 50) {
-              contentEl.innerHTML = '<div class="content-error">★ 无法正确加载文章内容，请点击"阅读全文"查看完整文章 ★</div>';
-              return;
-            }
-            
-            articleContents[index] = processedHTML;
-            contentEl.innerHTML = processedHTML;
-          } else {
-            contentEl.innerHTML = '<div class="content-error">★ 无法定位文章内容，请点击"阅读全文"查看 ★</div>';
-          }
-        })
-        .catch(error => {
-          console.error('加载文章失败:', error);
-          contentEl.innerHTML = '<div class="content-error">★ 加载失败，请点击"阅读全文"查看 ★</div>';
-        });
-    }
-
-    /* =========================================================
-       10. 分页控件渲染
-    ========================================================= */
+    // ==================== 分页控件 ====================
     function renderPagination(cur, total) {
       const el = document.getElementById("pagination");
-
       if (total <= 1) {
         el.innerHTML = "";
         el.classList.remove("show");
@@ -957,94 +636,126 @@
         const left  = Math.max(2, cur - 1);
         const right = Math.min(total - 1, cur + 1);
         pages.push(1);
-        if (left > 2)          pages.push("…");
+        if (left > 2) pages.push("…");
         for (let i = left; i <= right; i++) pages.push(i);
         if (right < total - 1) pages.push("…");
         pages.push(total);
       }
 
-      let html =
-        `<button class="pg-btn prev" ${cur === 1 ? "disabled" : ""}
-           onclick="renderPage(${cur - 1})">上一页</button>`;
-
+      let html = `<button class="pg-btn prev" ${cur===1?"disabled":""} onclick="renderPage(${cur-1})">上一页</button>`;
       html += '<div class="pg-numbers">';
       pages.forEach(p => {
         if (p === "…") {
           html += `<span class="pg-ellipsis">…</span>`;
         } else {
-          html += `<div class="pg-num ${p === cur ? "active" : ""}"
-                        onclick="renderPage(${p})">${p}</div>`;
+          html += `<div class="pg-num ${p===cur?"active":""}" onclick="renderPage(${p})">${p}</div>`;
         }
       });
       html += '</div>';
-
-      html +=
-        `<button class="pg-btn next" ${cur === total ? "disabled" : ""}
-           onclick="renderPage(${cur + 1})">下一页</button>`;
+      html += `<button class="pg-btn next" ${cur===total?"disabled":""} onclick="renderPage(${cur+1})">下一页</button>`;
 
       el.innerHTML = html;
       el.classList.add("show");
     }
 
-    /* =========================================================
-       11. AI 按钮
-    ========================================================= */
-    document.getElementById("aiBtn").addEventListener("click", () => {
-      window.open("https://huggingface.co/spaces/rofg2/rotai", "_blank");
-    });
+    // ==================== RSS 加载 ====================
+    fetch("https://paper.wf/meteor/feed/")
+      .then(r => r.text())
+      .then(str => new DOMParser().parseFromString(str, "text/xml"))
+      .then(data => {
+        data.querySelectorAll("item").forEach(el => {
+          const title = el.querySelector("title")?.textContent || "";
+          const link  = el.querySelector("link")?.textContent || "";
+          const date  = new Date(el.querySelector("pubDate")?.textContent || "");
 
-    /* =========================================================
-       12. 火流星特效（持续 15 秒）
-    ========================================================= */
+          const formattedDate = date && !isNaN(date)
+            ? date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2,"0") + "-" + String(date.getDate()).padStart(2,"0")
+            : "未知日期";
+
+          let summary = "";
+          const desc = el.querySelector("description")?.textContent || "";
+          if (desc) {
+            summary = desc
+              .replace(/<[^>]+>/g, "")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 120);
+            if (summary.length === 120) summary += "…";
+          }
+
+          if (title && link) {
+            allArticles.push({ title, link, formattedDate, summary });
+          }
+        });
+
+        if (allArticles.length === 0) {
+          document.getElementById("blog-cards").innerHTML = '<div class="error-msg">暂无文章</div>';
+          return;
+        }
+
+        document.getElementById("totalCount").textContent = allArticles.length;
+        document.getElementById("statsBar").classList.add("show");
+        renderPage(1);
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("blog-cards").innerHTML =
+          '<div class="error-msg">★ 博客加载失败，请稍后重试 ★</div>';
+      });
+
+    // ==================== AI 按钮 ====================
+    document.getElementById("aiBtn").onclick = () => {
+      window.open("https://huggingface.co/spaces/rofg2/rotai", "_blank");
+    };
+
+    // ==================== 流星特效（保持原样） ====================
     (function () {
       const canvas = document.getElementById("meteorCanvas");
-      const ctx    = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d");
 
       function resize() {
-        canvas.width  = window.innerWidth;
+        canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       }
       resize();
       window.addEventListener("resize", resize);
 
-      const DURATION   = 15000;
+      const DURATION = 15000;
       const SPAWN_RATE = 220;
-      const startTime  = performance.now();
-      let   lastSpawn  = 0;
-      const meteors    = [];
-      const COLORS = [
-        [255, 200,  40], [255, 140,  20],
-        [255,  60,  20], [255, 240, 180],
-      ];
+      const startTime = performance.now();
+      let lastSpawn = 0;
+      const meteors = [];
+      const COLORS = [[255,200,40],[255,140,20],[255,60,20],[255,240,180]];
 
       function spawnMeteor() {
         const fromRight = Math.random() > 0.3;
         meteors.push({
-          x:       fromRight ? canvas.width * (0.5 + Math.random() * 0.7) : canvas.width * Math.random() * 0.5,
-          y:       Math.random() * canvas.height * 0.55,
-          angle:   Math.PI / 4 + (Math.random() - 0.5) * 0.5,
-          speed:   12 + Math.random() * 18,
-          length:  100 + Math.random() * 200,
-          life:    0,
-          maxLife: 0.6 + Math.random() * 0.4,
-          col:     COLORS[Math.floor(Math.random() * COLORS.length)],
+          x: fromRight ? canvas.width * (0.5 + Math.random()*0.7) : canvas.width * Math.random()*0.5,
+          y: Math.random() * canvas.height * 0.55,
+          angle: Math.PI/4 + (Math.random()-0.5)*0.5,
+          speed: 12 + Math.random()*18,
+          length: 100 + Math.random()*200,
+          life: 0,
+          maxLife: 0.6 + Math.random()*0.4,
+          col: COLORS[Math.floor(Math.random()*COLORS.length)]
         });
       }
 
       function drawMeteor(m, alpha) {
         const tailX = m.x - Math.cos(m.angle) * m.length;
         const tailY = m.y - Math.sin(m.angle) * m.length;
-        const grad  = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
-        const [r, g, b] = m.col;
+        const grad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+        const [r,g,b] = m.col;
         grad.addColorStop(0,   `rgba(${r},${g},${b},0)`);
-        grad.addColorStop(0.6, `rgba(${r},${g},${b},${alpha * 0.4})`);
+        grad.addColorStop(0.6, `rgba(${r},${g},${b},${alpha*0.4})`);
         grad.addColorStop(1,   `rgba(255,255,255,${alpha})`);
+
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
         ctx.strokeStyle = grad; ctx.lineWidth = 2.5;
         ctx.shadowColor = `rgba(${r},${g},${b},${alpha})`; ctx.shadowBlur = 14;
         ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(m.x, m.y); ctx.stroke();
-        ctx.beginPath(); ctx.arc(m.x, m.y, 2.5, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(m.x, m.y, 2.5, 0, Math.PI*2);
         ctx.fillStyle = `rgba(255,255,255,${alpha})`; ctx.shadowBlur = 20; ctx.fill();
         ctx.restore();
       }
@@ -1053,30 +764,41 @@
       function animate(now) {
         const elapsed = now - startTime;
         if (elapsed > DURATION && meteors.length === 0) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          canvas.style.display = "none"; return;
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          canvas.style.display = "none";
+          return;
         }
-        const dt = (now - prevTime) / 1000; prevTime = now;
+
+        const dt = (now - prevTime)/1000; prevTime = now;
+
         if (elapsed < DURATION && now - lastSpawn > SPAWN_RATE) {
           spawnMeteor();
           if (Math.random() > 0.65) spawnMeteor();
           lastSpawn = now;
         }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let i = meteors.length - 1; i >= 0; i--) {
+
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        for (let i = meteors.length-1; i >= 0; i--) {
           const m = meteors[i];
-          m.life += dt; m.x += Math.cos(m.angle) * m.speed; m.y += Math.sin(m.angle) * m.speed;
+          m.life += dt;
+          m.x += Math.cos(m.angle) * m.speed;
+          m.y += Math.sin(m.angle) * m.speed;
+
           const p = m.life / m.maxLife;
-          const alpha = p < 0.15 ? p / 0.15 : p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3;
-          if (m.life >= m.maxLife || m.x > canvas.width + 200 || m.y > canvas.height + 200) {
-            meteors.splice(i, 1); continue;
+          const alpha = p < 0.15 ? p/0.15 : p < 0.7 ? 1 : 1 - (p-0.7)/0.3;
+
+          if (m.life >= m.maxLife || m.x > canvas.width+200 || m.y > canvas.height+200) {
+            meteors.splice(i,1);
+            continue;
           }
           drawMeteor(m, Math.max(0, alpha));
         }
+
         requestAnimationFrame(animate);
       }
       requestAnimationFrame(animate);
     })();
   </script>
 </body>
-  </html>
+</html>
