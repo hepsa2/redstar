@@ -4,6 +4,8 @@
 注意要改index.html、blog.html和submit.html里的用户名和仓库（替换hepsa2和mlmpm），可统一用AI完成修改<br>
 submit.html人际验证还可以引入cloudflare<br>
 审核打标签不要取消原来的投稿标签，新增标签即可。
+# 更新网站时改sw.js
+const CACHE_NAME = 'app-cache-v3'; // 改版本号
 # Markdawn格式说明<br>
 - 备注：请点进main的README文件，选择code一栏查看格式<br>
 管理员发表文章只需要点进postsA或postsB等文件夹，创建：文件名.md然后撰写内容<br>
