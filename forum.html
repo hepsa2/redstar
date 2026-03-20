@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>红星论坛 - 调试版</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>红星论坛</title>
     <style>
         :root {
             --red: #b30000;
@@ -232,13 +231,6 @@
             background: linear-gradient(to right, #fffbf0, white);
         }
 
-        .post-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
         .post-title {
             font-size: 18px;
             font-weight: bold;
@@ -256,6 +248,7 @@
             display: flex;
             gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .post-author {
@@ -280,12 +273,6 @@
             font-size: 13px;
             color: #888;
             margin-top: 10px;
-        }
-
-        .post-stats span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
 
         .loading {
@@ -459,39 +446,6 @@
             }
         }
 
-        /* 调试信息面板 */
-        .debug-panel {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background: #333;
-            color: #0f0;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            max-width: 400px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 9999;
-        }
-
-        .debug-panel div {
-            margin: 3px 0;
-        }
-
-        .debug-panel .error {
-            color: #f00;
-        }
-
-        .debug-panel .success {
-            color: #0f0;
-        }
-
-        .debug-panel .warning {
-            color: #ff0;
-        }
-
         @media (max-width: 768px) {
             .main-container {
                 grid-template-columns: 1fr;
@@ -502,20 +456,24 @@
                 order: 2;
             }
 
-            .debug-panel {
-                font-size: 10px;
-                max-width: 90%;
+            .navbar h1 {
+                font-size: 18px;
+            }
+
+            .content-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .new-post-btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <div class="star-bg">★</div>
-
-    <!-- 调试信息面板 -->
-    <div class="debug-panel" id="debugPanel">
-        <div class="success">🔍 调试模式已启动</div>
-    </div>
 
     <nav class="navbar">
         <div class="container">
@@ -533,6 +491,14 @@
                 <h3>📚 板块分类</h3>
                 <div id="categoryList">
                     <div class="loading">加载中...</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>ℹ️ 论坛信息</h3>
+                <div style="font-size: 13px; color: #666; line-height: 1.6;">
+                    <p style="margin-bottom: 8px;">欢迎来到红星论坛</p>
+                    <p>共同讨论，交流学习</p>
                 </div>
             </div>
         </aside>
@@ -627,67 +593,58 @@
 
     <div id="toast" class="toast"></div>
 
+    <!-- 先加载 Supabase 库，然后再执行初始化代码 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // 调试日志函数
-        function debugLog(message, type = 'success') {
-            const panel = document.getElementById('debugPanel');
-            const div = document.createElement('div');
-            div.className = type;
-            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            panel.appendChild(div);
-            panel.scrollTop = panel.scrollHeight;
-            console.log(`[DEBUG ${type}]`, message);
-        }
-
-        // Supabase 配置
-        debugLog('初始化 Supabase...', 'warning');
-        const SUPABASE_URL = 'https://dlzmdgbpvvsuvhkxxctr.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsem1kZ2JwdnZzdXZoa3h4Y3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5ODkxNDQsImV4cCI6MjA4OTU2NTE0NH0.8c5HPCsCGhrW3nuzhUzOZVJTus2-qw5TQb90WnRiFQ8';
-        
+        // 全局变量
         let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            debugLog('✓ Supabase 客户端创建成功', 'success');
-        } catch (error) {
-            debugLog('✗ Supabase 初始化失败: ' + error.message, 'error');
-        }
-
         let currentUser = null;
         let categories = [];
         let currentCategoryId = null;
 
-        // 初始化
-        async function init() {
+        // 等待 DOM 和 Supabase 都加载完成
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 加载完成，初始化 Supabase...');
+            
+            // 初始化 Supabase
             try {
-                debugLog('开始初始化应用...', 'warning');
+                supabase = window.supabase.createClient(
+                    'https://dlzmdgbpvvsuvhkxxctr.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsem1kZ2JwdnZzdXZoa3h4Y3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5ODkxNDQsImV4cCI6MjA4OTU2NTE0NH0.8c5HPCsCGhrW3nuzhUzOZVJTus2-qw5TQb90WnRiFQ8'
+                );
+                console.log('Supabase 初始化成功');
+                
+                // 开始初始化应用
+                init();
+            } catch (error) {
+                console.error('Supabase 初始化失败:', error);
+                showToast('初始化失败，请刷新页面', 'error');
+            }
+        });
+
+        // 初始化应用
+        async function init() {
+            console.log('开始初始化应用...');
+            try {
                 await checkAuth();
                 await loadCategories();
                 await loadPosts();
-                debugLog('✓ 应用初始化完成', 'success');
+                console.log('应用初始化完成');
             } catch (error) {
-                debugLog('✗ 初始化失败: ' + error.message, 'error');
-                showToast('初始化失败，请刷新页面重试', 'error');
+                console.error('初始化失败:', error);
+                showToast('加载失败，请刷新页面', 'error');
             }
         }
 
         // 检查认证状态
         async function checkAuth() {
             try {
-                debugLog('检查用户认证状态...', 'warning');
                 const { data: { user }, error } = await supabase.auth.getUser();
-                
-                if (error) {
-                    debugLog('认证检查出错: ' + error.message, 'error');
-                } else if (user) {
-                    debugLog('✓ 用户已登录: ' + user.email, 'success');
-                } else {
-                    debugLog('用户未登录', 'warning');
-                }
-                
+                if (error) throw error;
                 currentUser = user;
                 updateAuthUI();
             } catch (error) {
-                debugLog('✗ checkAuth 异常: ' + error.message, 'error');
+                console.error('认证检查失败:', error);
             }
         }
 
@@ -704,48 +661,32 @@
                     </div>
                 `;
                 newPostBtn.disabled = false;
-                debugLog('UI 更新：已登录状态', 'success');
             } else {
                 authSection.innerHTML = `
                     <button onclick="showLoginModal()">登录</button>
                     <button onclick="showSignupModal()">注册</button>
                 `;
                 newPostBtn.disabled = true;
-                debugLog('UI 更新：未登录状态', 'warning');
             }
         }
 
         // 加载板块
         async function loadCategories() {
             try {
-                debugLog('加载板块列表...', 'warning');
                 const { data, error } = await supabase
                     .from('categories')
                     .select('*')
                     .order('created_at');
 
-                if (error) {
-                    debugLog('✗ 加载板块失败: ' + error.message, 'error');
-                    debugLog('错误详情: ' + JSON.stringify(error), 'error');
-                    
-                    // 显示友好错误信息
-                    const container = document.getElementById('categoryList');
-                    container.innerHTML = `
-                        <div style="color:#f00; font-size:13px; padding:10px;">
-                            <strong>加载失败</strong><br>
-                            ${error.message}<br>
-                            <small>请检查数据库配置</small>
-                        </div>
-                    `;
-                    return;
-                }
+                if (error) throw error;
 
-                debugLog(`✓ 成功加载 ${data.length} 个板块`, 'success');
-                categories = data;
+                categories = data || [];
                 renderCategories();
                 updateCategorySelect();
             } catch (error) {
-                debugLog('✗ loadCategories 异常: ' + error.message, 'error');
+                console.error('加载板块失败:', error);
+                document.getElementById('categoryList').innerHTML = 
+                    '<div style="color:#999;">加载失败</div>';
             }
         }
 
@@ -754,13 +695,7 @@
             const container = document.getElementById('categoryList');
             
             if (categories.length === 0) {
-                container.innerHTML = `
-                    <div style="color:#999; font-size:13px;">暂无板块</div>
-                    <button onclick="loadCategories()" style="margin-top:10px; padding:8px; width:100%; background:#f0f0f0; border:none; border-radius:5px; cursor:pointer;">
-                        🔄 重新加载
-                    </button>
-                `;
-                debugLog('板块列表为空', 'warning');
+                container.innerHTML = '<div style="color:#999; font-size:13px;">暂无板块</div>';
                 return;
             }
 
@@ -771,12 +706,11 @@
                 ${categories.map(cat => `
                     <div class="category-item ${currentCategoryId === cat.id ? 'active' : ''}" 
                          onclick="filterByCategory('${cat.id}')">
-                        <span class="category-name">${cat.name}</span>
-                        <span class="category-desc">${cat.description || ''}</span>
+                        <span class="category-name">${escapeHtml(cat.name)}</span>
+                        <span class="category-desc">${escapeHtml(cat.description || '')}</span>
                     </div>
                 `).join('')}
             `;
-            debugLog('板块列表渲染完成', 'success');
         }
 
         // 更新发帖板块选择
@@ -785,7 +719,7 @@
             select.innerHTML = `
                 <option value="">请选择...</option>
                 ${categories.map(cat => `
-                    <option value="${cat.id}">${cat.name}</option>
+                    <option value="${cat.id}">${escapeHtml(cat.name)}</option>
                 `).join('')}
             `;
         }
@@ -793,7 +727,6 @@
         // 按板块筛选
         function filterByCategory(categoryId) {
             currentCategoryId = categoryId;
-            debugLog(`筛选板块: ${categoryId || '全部'}`, 'warning');
             renderCategories();
             loadPosts();
             
@@ -808,16 +741,15 @@
 
         // 加载帖子
         async function loadPosts() {
-            try {
-                const container = document.getElementById('postList');
-                container.innerHTML = '<div class="loading">加载中...</div>';
-                debugLog('加载帖子列表...', 'warning');
+            const container = document.getElementById('postList');
+            container.innerHTML = '<div class="loading">加载中...</div>';
 
+            try {
                 let query = supabase
                     .from('posts')
                     .select(`
                         *,
-                        profiles:author_id(username, avatar_url),
+                        profiles:author_id(username),
                         categories(name)
                     `)
                     .order('is_pinned', { ascending: false })
@@ -829,23 +761,9 @@
 
                 const { data, error } = await query;
 
-                if (error) {
-                    debugLog('✗ 加载帖子失败: ' + error.message, 'error');
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <h3>加载失败</h3>
-                            <p style="color:#f00; margin:10px 0;">${error.message}</p>
-                            <button onclick="loadPosts()" style="margin-top:15px; padding:10px 20px; background:var(--red); color:white; border:none; border-radius:5px; cursor:pointer;">
-                                🔄 重新加载
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
+                if (error) throw error;
 
-                debugLog(`✓ 成功加载 ${data.length} 个帖子`, 'success');
-
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
                             <h3>暂无帖子</h3>
@@ -859,7 +777,13 @@
 
                 renderPosts(data);
             } catch (error) {
-                debugLog('✗ loadPosts 异常: ' + error.message, 'error');
+                console.error('加载帖子失败:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>加载失败</h3>
+                        <p style="color:#999; margin-top:10px;">${error.message}</p>
+                    </div>
+                `;
             }
         }
 
@@ -868,15 +792,11 @@
             const container = document.getElementById('postList');
             container.innerHTML = posts.map(post => `
                 <div class="post-card ${post.is_pinned ? 'pinned' : ''}">
-                    <div class="post-header">
-                        <div>
-                            <div class="post-title">${escapeHtml(post.title)}</div>
-                            <div class="post-meta">
-                                <span class="post-author">@${post.profiles?.username || '匿名'}</span>
-                                <span>📁 ${post.categories?.name || '未分类'}</span>
-                                <span>${formatDate(post.created_at)}</span>
-                            </div>
-                        </div>
+                    <div class="post-title">${escapeHtml(post.title)}</div>
+                    <div class="post-meta">
+                        <span class="post-author">@${post.profiles?.username || '匿名'}</span>
+                        <span>📁 ${post.categories?.name || '未分类'}</span>
+                        <span>${formatDate(post.created_at)}</span>
                     </div>
                     <div class="post-content-preview">${escapeHtml(post.content)}</div>
                     <div class="post-stats">
@@ -890,28 +810,22 @@
         async function handleLogin(e) {
             e.preventDefault();
             try {
-                debugLog('尝试登录...', 'warning');
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
 
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { error } = await supabase.auth.signInWithPassword({
                     email,
                     password
                 });
 
-                if (error) {
-                    debugLog('✗ 登录失败: ' + error.message, 'error');
-                    showToast('登录失败: ' + error.message, 'error');
-                    return;
-                }
+                if (error) throw error;
 
-                debugLog('✓ 登录成功', 'success');
                 showToast('登录成功！', 'success');
                 closeModal('loginModal');
                 await checkAuth();
                 loadPosts();
             } catch (error) {
-                debugLog('✗ handleLogin 异常: ' + error.message, 'error');
+                showToast('登录失败: ' + error.message, 'error');
             }
         }
 
@@ -919,47 +833,38 @@
         async function handleSignup(e) {
             e.preventDefault();
             try {
-                debugLog('尝试注册...', 'warning');
                 const email = document.getElementById('signupEmail').value;
                 const password = document.getElementById('signupPassword').value;
                 const confirmPassword = document.getElementById('signupPasswordConfirm').value;
 
                 if (password !== confirmPassword) {
                     showToast('两次密码输入不一致', 'error');
-                    debugLog('密码不一致', 'error');
                     return;
                 }
 
-                const { data, error } = await supabase.auth.signUp({
+                const { error } = await supabase.auth.signUp({
                     email,
                     password
                 });
 
-                if (error) {
-                    debugLog('✗ 注册失败: ' + error.message, 'error');
-                    showToast('注册失败: ' + error.message, 'error');
-                    return;
-                }
+                if (error) throw error;
 
-                debugLog('✓ 注册成功', 'success');
                 showToast('注册成功！请检查邮箱验证链接', 'success');
                 closeModal('signupModal');
             } catch (error) {
-                debugLog('✗ handleSignup 异常: ' + error.message, 'error');
+                showToast('注册失败: ' + error.message, 'error');
             }
         }
 
         // 登出
         async function handleLogout() {
             try {
-                debugLog('退出登录...', 'warning');
                 await supabase.auth.signOut();
-                debugLog('✓ 已退出', 'success');
                 showToast('已退出登录', 'success');
                 await checkAuth();
                 loadPosts();
             } catch (error) {
-                debugLog('✗ handleLogout 异常: ' + error.message, 'error');
+                showToast('退出失败: ' + error.message, 'error');
             }
         }
 
@@ -973,12 +878,11 @@
             }
 
             try {
-                debugLog('提交新帖...', 'warning');
                 const categoryId = document.getElementById('postCategory').value;
                 const title = document.getElementById('postTitle').value;
                 const content = document.getElementById('postContent').value;
 
-                const { data, error } = await supabase
+                const { error } = await supabase
                     .from('posts')
                     .insert([{
                         category_id: categoryId,
@@ -987,13 +891,8 @@
                         content
                     }]);
 
-                if (error) {
-                    debugLog('✗ 发帖失败: ' + error.message, 'error');
-                    showToast('发帖失败: ' + error.message, 'error');
-                    return;
-                }
+                if (error) throw error;
 
-                debugLog('✓ 发帖成功', 'success');
                 showToast('发帖成功！', 'success');
                 closeModal('newPostModal');
                 document.getElementById('postTitle').value = '';
@@ -1001,18 +900,16 @@
                 document.getElementById('postCategory').value = '';
                 await loadPosts();
             } catch (error) {
-                debugLog('✗ handleNewPost 异常: ' + error.message, 'error');
+                showToast('发帖失败: ' + error.message, 'error');
             }
         }
 
         // 模态框控制
         function showLoginModal() {
-            debugLog('打开登录窗口', 'warning');
             document.getElementById('loginModal').classList.add('active');
         }
 
         function showSignupModal() {
-            debugLog('打开注册窗口', 'warning');
             document.getElementById('signupModal').classList.add('active');
         }
 
@@ -1021,7 +918,6 @@
                 showToast('请先登录', 'error');
                 return;
             }
-            debugLog('打开发帖窗口', 'warning');
             document.getElementById('newPostModal').classList.add('active');
         }
 
@@ -1061,21 +957,11 @@
         }
 
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // 页面加载时初始化
-        window.addEventListener('DOMContentLoaded', () => {
-            debugLog('DOM 加载完成', 'success');
-            init();
-        });
-
-        // 全局错误捕获
-        window.addEventListener('error', (event) => {
-            debugLog('✗ 全局错误: ' + event.message, 'error');
-        });
     </script>
 </body>
 </html>
