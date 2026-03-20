@@ -1,201 +1,1092 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>群众论坛</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红星论坛</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --red: #b30000;
+            --lightred: #ffd6d6;
+            --darkred: #8b0000;
+            --white: #ffffff;
+            --bg-light: #fff5f5;
+            --shadow: 0 6px 16px rgba(0,0,0,0.15);
+            --radius: 10px;
+        }
 
-<style>
-:root{
-    --red:#b30000;
-    --lightred:#ffd6d6;
-}
-body{
-    margin:0;
-    background:var(--lightred);
-    color:#222;
-    font-family:"Noto Sans SC",system-ui;
-}
-.star-bg{
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    font-size:120vw;
-    color:#ffd700;
-    opacity:0.08;
-    z-index:-1;
-}
-.container{
-    max-width:900px;
-    margin:auto;
-    padding:30px 20px;
-}
-h1{text-align:center;color:#8b0000;}
-.section{
-    background:white;
-    padding:20px;
-    border-radius:10px;
-    margin-bottom:20px;
-    box-shadow:0 6px 16px rgba(0,0,0,0.15);
-}
-input,textarea,button{
-    width:100%;
-    margin-top:10px;
-    padding:10px;
-    border-radius:6px;
-    border:1px solid #ccc;
-}
-button{
-    background:#b30000;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-button:hover{background:#8b0000;}
-.post{border-bottom:1px solid #eee;margin-bottom:15px;padding-bottom:10px;}
-.comment{margin-left:15px;font-size:14px;color:#444;}
-</style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+        body {
+            background: var(--lightred);
+            color: #222;
+            font-family: "Noto Sans SC", system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 背景星星 */
+        .star-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120vw;
+            color: #ffd700;
+            opacity: 0.08;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background: var(--red);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar .container {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 24px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar h1::before {
+            content: "★";
+            color: #ffd700;
+        }
+
+        .auth-buttons button {
+            background: white;
+            color: var(--red);
+            border: none;
+            padding: 8px 20px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .auth-buttons button:hover {
+            background: var(--lightred);
+            transform: translateY(-2px);
+        }
+
+        .user-info {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info span {
+            font-size: 14px;
+        }
+
+        /* 主容器 */
+        .main-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+        }
+
+        /* 左侧边栏 */
+        .sidebar {
+            position: sticky;
+            top: 90px;
+            height: fit-content;
+        }
+
+        .sidebar-section {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar-section h3 {
+            color: var(--darkred);
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid var(--lightred);
+            padding-bottom: 10px;
+        }
+
+        .category-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: var(--bg-light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .category-item:hover {
+            background: var(--lightred);
+            border-left-color: var(--red);
+            transform: translateX(5px);
+        }
+
+        .category-item.active {
+            background: var(--lightred);
+            border-left-color: var(--red);
+            font-weight: bold;
+        }
+
+        .category-name {
+            font-size: 15px;
+            color: #333;
+            display: block;
+        }
+
+        .category-desc {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            min-height: 60vh;
+        }
+
+        .content-header {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-header h2 {
+            color: var(--darkred);
+            font-size: 22px;
+        }
+
+        .new-post-btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .new-post-btn:hover {
+            background: var(--darkred);
+            transform: translateY(-2px);
+        }
+
+        .new-post-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 帖子列表 */
+        .post-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .post-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border-left-color: var(--red);
+        }
+
+        .post-card.pinned {
+            border-left-color: #ffd700;
+            background: linear-gradient(to right, #fffbf0, white);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .post-card.pinned .post-title::before {
+            content: "📌 ";
+        }
+
+        .post-meta {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .post-author {
+            color: var(--red);
+            font-weight: 500;
+        }
+
+        .post-content-preview {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 10px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .post-stats span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .loading::after {
+            content: "...";
+            animation: dots 1.5s steps(3, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: "."; }
+            40% { content: ".."; }
+            60%, 100% { content: "..."; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--lightred);
+        }
+
+        .modal-header h3 {
+            color: var(--darkred);
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .close-btn:hover {
+            color: var(--red);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--red);
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: var(--darkred);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 帖子详情页 */
+        .post-detail {
+            background: white;
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .post-detail-header {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--lightred);
+        }
+
+        .post-detail-title {
+            font-size: 26px;
+            color: var(--darkred);
+            margin-bottom: 15px;
+        }
+
+        .post-detail-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+
+        .back-btn {
+            display: inline-block;
+            color: var(--red);
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: var(--darkred);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+
+            .navbar h1 {
+                font-size: 18px;
+            }
+
+            .auth-buttons button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .content-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .new-post-btn {
+                width: 100%;
+            }
+
+            .post-title {
+                font-size: 16px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        /* 通知提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.active {
+            display: block;
+        }
+
+        .toast.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--red);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
-
 <body>
-<div class="star-bg">★</div>
+    <div class="star-bg">★</div>
 
-<div class="container">
-<h1>论坛</h1>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <h1>红星论坛</h1>
+            <div id="authSection" class="auth-buttons">
+                <button onclick="showLoginModal()">登录</button>
+                <button onclick="showSignupModal()">注册</button>
+            </div>
+        </div>
+    </nav>
 
-<!-- 登录 -->
-<div class="section">
-<h2>用户登录 / 注册</h2>
-<input id="email" placeholder="邮箱">
-<input id="password" type="password" placeholder="密码">
-<button onclick="signUp()">注册</button>
-<button onclick="signIn()">登录</button>
-<p id="userInfo"></p>
-</div>
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>📚 板块分类</h3>
+                <div id="categoryList">
+                    <div class="loading">加载中</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>ℹ️ 论坛信息</h3>
+                <div style="font-size: 13px; color: #666; line-height: 1.6;">
+                    <p style="margin-bottom: 8px;">欢迎来到红星论坛</p>
+                    <p>共同讨论，交流学习</p>
+                </div>
+            </div>
+        </aside>
 
-<!-- 发帖 -->
-<div class="section">
-<h2>发帖</h2>
-<input id="title" placeholder="标题">
-<textarea id="content" placeholder="内容"></textarea>
-<button onclick="createPost()">发布</button>
-</div>
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 帖子列表视图 -->
+            <div id="listView">
+                <div class="content-header">
+                    <h2 id="viewTitle">全部帖子</h2>
+                    <button class="new-post-btn" onclick="showNewPostModal()" id="newPostBtn" disabled>
+                        ✏️ 发表新帖
+                    </button>
+                </div>
+                <div id="postList" class="post-list">
+                    <div class="loading">加载帖子中</div>
+                </div>
+            </div>
 
-<!-- 帖子 -->
-<div class="section">
-<h2>帖子列表</h2>
-<div id="posts"></div>
-</div>
+            <!-- 帖子详情视图 -->
+            <div id="detailView" style="display: none;">
+                <div class="back-btn" onclick="showListView()">← 返回列表</div>
+                <div id="postDetail"></div>
+            </div>
+        </main>
+    </div>
 
-</div>
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>登录</h3>
+                <button class="close-btn" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" required placeholder="至少6位密码">
+                </div>
+                <button type="submit" class="submit-btn">登录</button>
+            </form>
+        </div>
+    </div>
 
-<script>
-const supabase = window.supabase.createClient(
-  "https://dlzmdgbpvvsuvhkxxctr.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-);
+    <!-- 注册模态框 -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>注册新账号</h3>
+                <button class="close-btn" onclick="closeModal('signupModal')">&times;</button>
+            </div>
+            <form onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="signupEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="signupPassword" required placeholder="至少6位密码" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>确认密码</label>
+                    <input type="password" id="signupPasswordConfirm" required placeholder="再次输入密码" minlength="6">
+                </div>
+                <button type="submit" class="submit-btn">注册</button>
+            </form>
+        </div>
+    </div>
 
-// 注册
-async function signUp(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const {error} = await supabase.auth.signUp({email,password});
-  alert(error ? error.message : "注册成功");
-}
+    <!-- 发帖模态框 -->
+    <div id="newPostModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>发表新帖</h3>
+                <button class="close-btn" onclick="closeModal('newPostModal')">&times;</button>
+            </div>
+            <form onsubmit="handleNewPost(event)">
+                <div class="form-group">
+                    <label>选择板块</label>
+                    <select id="postCategory" required>
+                        <option value="">请选择...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" id="postTitle" required placeholder="输入帖子标题" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>内容</label>
+                    <textarea id="postContent" required placeholder="分享你的想法..."></textarea>
+                </div>
+                <button type="submit" class="submit-btn">发布</button>
+            </form>
+        </div>
+    </div>
 
-// 登录
-async function signIn(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const {error} = await supabase.auth.signInWithPassword({email,password});
-  alert(error ? error.message : "登录成功");
-  getUser();
-}
+    <!-- 通知提示 -->
+    <div id="toast" class="toast"></div>
 
-// 当前用户
-async function getUser(){
-  const {data} = await supabase.auth.getUser();
-  document.getElementById("userInfo").innerText =
-    data.user ? "已登录："+data.user.email : "未登录";
-}
+    <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://dlzmdgbpvvsuvhkxxctr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsem1kZ2JwdnZzdXZoa3h4Y3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5ODkxNDQsImV4cCI6MjA4OTU2NTE0NH0.8c5HPCsCGhrW3nuzhUzOZVJTus2-qw5TQb90WnRiFQ8';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 发帖
-async function createPost(){
-  const {data} = await supabase.auth.getUser();
-  if(!data.user){alert("请先登录");return;}
+        // 全局状态
+        let currentUser = null;
+        let categories = [];
+        let currentCategoryId = null;
 
-  const title = document.getElementById("title").value;
-  const content = document.getElementById("content").value;
+        // 初始化
+        async function init() {
+            await checkAuth();
+            await loadCategories();
+            await loadPosts();
+        }
 
-  await supabase.from("posts").insert({
-    title,content,user_id:data.user.id
-  });
+        // 检查认证状态
+        async function checkAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            currentUser = user;
+            updateAuthUI();
+        }
 
-  loadPosts();
-}
+        // 更新认证界面
+        function updateAuthUI() {
+            const authSection = document.getElementById('authSection');
+            const newPostBtn = document.getElementById('newPostBtn');
+            
+            if (currentUser) {
+                authSection.innerHTML = `
+                    <div class="user-info">
+                        <span>👤 ${currentUser.email}</span>
+                        <button onclick="handleLogout()">退出</button>
+                    </div>
+                `;
+                newPostBtn.disabled = false;
+            } else {
+                authSection.innerHTML = `
+                    <button onclick="showLoginModal()">登录</button>
+                    <button onclick="showSignupModal()">注册</button>
+                `;
+                newPostBtn.disabled = true;
+            }
+        }
 
-// 加载帖子
-async function loadPosts(){
-  const {data:posts} = await supabase
-    .from("posts")
-    .select("*")
-    .order("created_at",{ascending:false});
+        // 加载板块
+        async function loadCategories() {
+            const { data, error } = await supabase
+                .from('categories')
+                .select('*')
+                .order('created_at');
 
-  let html="";
-  for(let post of posts){
-    html+=`
-    <div class="post">
-      <strong>${post.title}</strong><br>
-      ${post.content}<br>
-      <button onclick="showComments('${post.id}')">查看评论</button>
-      <div id="c-${post.id}"></div>
-    </div>`;
-  }
-  document.getElementById("posts").innerHTML=html;
-}
+            if (error) {
+                console.error('加载板块失败:', error);
+                showToast('加载板块失败', 'error');
+                return;
+            }
 
-// 评论
-async function showComments(postId){
-  const {data:comments} = await supabase
-    .from("comments")
-    .select("*")
-    .eq("post_id",postId);
+            categories = data;
+            renderCategories();
+            updateCategorySelect();
+        }
 
-  let html="";
-  for(let c of comments){
-    html+=`<div class="comment">- ${c.content}</div>`;
-  }
+        // 渲染板块列表
+        function renderCategories() {
+            const container = document.getElementById('categoryList');
+            
+            if (categories.length === 0) {
+                container.innerHTML = '<div style="color:#999; font-size:13px;">暂无板块</div>';
+                return;
+            }
 
-  html+=`
-  <input id="input-${postId}" placeholder="写评论">
-  <button onclick="addComment('${postId}')">发送</button>
-  `;
+            container.innerHTML = `
+                <div class="category-item ${!currentCategoryId ? 'active' : ''}" onclick="filterByCategory(null)">
+                    <span class="category-name">🏠 全部帖子</span>
+                </div>
+                ${categories.map(cat => `
+                    <div class="category-item ${currentCategoryId === cat.id ? 'active' : ''}" 
+                         onclick="filterByCategory('${cat.id}')">
+                        <span class="category-name">${cat.name}</span>
+                        <span class="category-desc">${cat.description || ''}</span>
+                    </div>
+                `).join('')}
+            `;
+        }
 
-  document.getElementById("c-"+postId).innerHTML=html;
-}
+        // 更新发帖板块选择
+        function updateCategorySelect() {
+            const select = document.getElementById('postCategory');
+            select.innerHTML = `
+                <option value="">请选择...</option>
+                ${categories.map(cat => `
+                    <option value="${cat.id}">${cat.name}</option>
+                `).join('')}
+            `;
+        }
 
-async function addComment(postId){
-  const {data} = await supabase.auth.getUser();
-  if(!data.user){alert("请登录");return;}
+        // 按板块筛选
+        function filterByCategory(categoryId) {
+            currentCategoryId = categoryId;
+            renderCategories();
+            loadPosts();
+            
+            const title = document.getElementById('viewTitle');
+            if (categoryId) {
+                const cat = categories.find(c => c.id === categoryId);
+                title.textContent = cat ? cat.name : '全部帖子';
+            } else {
+                title.textContent = '全部帖子';
+            }
+        }
 
-  const content=document.getElementById("input-"+postId).value;
+        // 加载帖子
+        async function loadPosts() {
+            const container = document.getElementById('postList');
+            container.innerHTML = '<div class="loading">加载中</div>';
 
-  await supabase.from("comments").insert({
-    post_id:postId,
-    content,
-    user_id:data.user.id
-  });
+            let query = supabase
+                .from('posts')
+                .select(`
+                    *,
+                    profiles:author_id(username, avatar_url),
+                    categories(name)
+                `)
+                .order('is_pinned', { ascending: false })
+                .order('created_at', { ascending: false });
 
-  showComments(postId);
-}
+            if (currentCategoryId) {
+                query = query.eq('category_id', currentCategoryId);
+            }
 
-// 初始化
-getUser();
-loadPosts();
-</script>
+            const { data, error } = await query;
 
+            if (error) {
+                console.error('加载帖子失败:', error);
+                container.innerHTML = '<div class="empty-state"><h3>加载失败</h3></div>';
+                return;
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>暂无帖子</h3>
+                        <p style="color:#999; margin-top:10px;">
+                            ${currentUser ? '成为第一个发帖的人吧！' : '登录后即可发帖'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            renderPosts(data);
+        }
+
+        // 渲染帖子列表
+        function renderPosts(posts) {
+            const container = document.getElementById('postList');
+            container.innerHTML = posts.map(post => `
+                <div class="post-card ${post.is_pinned ? 'pinned' : ''}" 
+                     onclick="viewPost('${post.id}')">
+                    <div class="post-header">
+                        <div>
+                            <div class="post-title">${escapeHtml(post.title)}</div>
+                            <div class="post-meta">
+                                <span class="post-author">@${post.profiles?.username || '匿名'}</span>
+                                <span>📁 ${post.categories?.name || '未分类'}</span>
+                                <span>${formatDate(post.created_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-content-preview">${escapeHtml(post.content)}</div>
+                    <div class="post-stats">
+                        <span>👁️ ${post.view_count || 0} 浏览</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 查看帖子详情
+        async function viewPost(postId) {
+            const detailView = document.getElementById('detailView');
+            const listView = document.getElementById('listView');
+            
+            listView.style.display = 'none';
+            detailView.style.display = 'block';
+            
+            const detailContainer = document.getElementById('postDetail');
+            detailContainer.innerHTML = '<div class="loading">加载中</div>';
+
+            // 增加浏览量
+            await supabase.rpc('increment_view_count', { post_id: postId });
+
+            const { data, error } = await supabase
+                .from('posts')
+                .select(`
+                    *,
+                    profiles:author_id(username, avatar_url),
+                    categories(name)
+                `)
+                .eq('id', postId)
+                .single();
+
+            if (error) {
+                console.error('加载帖子详情失败:', error);
+                detailContainer.innerHTML = '<div class="empty-state"><h3>加载失败</h3></div>';
+                return;
+            }
+
+            detailContainer.innerHTML = `
+                <div class="post-detail">
+                    <div class="post-detail-header">
+                        <h1 class="post-detail-title">${escapeHtml(data.title)}</h1>
+                        <div class="post-meta">
+                            <span class="post-author">@${data.profiles?.username || '匿名'}</span>
+                            <span>📁 ${data.categories?.name || '未分类'}</span>
+                            <span>${formatDate(data.created_at)}</span>
+                            <span>👁️ ${data.view_count || 0} 浏览</span>
+                        </div>
+                    </div>
+                    <div class="post-detail-content">${escapeHtml(data.content)}</div>
+                </div>
+            `;
+        }
+
+        // 返回列表视图
+        function showListView() {
+            document.getElementById('listView').style.display = 'block';
+            document.getElementById('detailView').style.display = 'none';
+        }
+
+        // 登录
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) {
+                showToast('登录失败: ' + error.message, 'error');
+                return;
+            }
+
+            showToast('登录成功！', 'success');
+            closeModal('loginModal');
+            await checkAuth();
+            loadPosts();
+        }
+
+        // 注册
+        async function handleSignup(e) {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupPasswordConfirm').value;
+
+            if (password !== confirmPassword) {
+                showToast('两次密码输入不一致', 'error');
+                return;
+            }
+
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password
+            });
+
+            if (error) {
+                showToast('注册失败: ' + error.message, 'error');
+                return;
+            }
+
+            showToast('注册成功！请检查邮箱验证链接', 'success');
+            closeModal('signupModal');
+        }
+
+        // 登出
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            showToast('已退出登录', 'success');
+            await checkAuth();
+            loadPosts();
+        }
+
+        // 发帖
+        async function handleNewPost(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+
+            const categoryId = document.getElementById('postCategory').value;
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+
+            if (!categoryId || !title || !content) {
+                showToast('请填写完整信息', 'error');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('posts')
+                .insert([{
+                    category_id: categoryId,
+                    author_id: currentUser.id,
+                    title,
+                    content
+                }]);
+
+            if (error) {
+                showToast('发帖失败: ' + error.message, 'error');
+                return;
+            }
+
+            showToast('发帖成功！', 'success');
+            closeModal('newPostModal');
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('postCategory').value = '';
+            await loadPosts();
+        }
+
+        // 模态框控制
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function showSignupModal() {
+            document.getElementById('signupModal').classList.add('active');
+        }
+
+        function showNewPostModal() {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            document.getElementById('newPostModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // 通知提示
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} active`;
+            
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000);
+        }
+
+        // 工具函数
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+            
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 页面加载时初始化
+        init();
+    </script>
 </body>
 </html>
